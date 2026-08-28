@@ -106,13 +106,53 @@ public class NoteBlockRenderer {
                         RenderType.lines()
                 );
 
+        /*
+         * Consecutive copies of the same note
+         * alternate between yellow and red.
+         *
+         * Example:
+         *
+         * 2 = yellow
+         * 2 = red
+         * 2 = yellow
+         * 2 = red
+         *
+         * Changing to another note resets it:
+         *
+         * 4 = yellow
+         * 4 = red
+         */
+
+        boolean alternate =
+                PianoClient.PLAYER
+                        .useAlternateColor();
+
+        float red;
+        float green;
+        float blue;
+
+        if (alternate) {
+
+            // RED
+            red = 1.0F;
+            green = 0.0F;
+            blue = 0.0F;
+
+        } else {
+
+            // YELLOW
+            red = 1.0F;
+            green = 1.0F;
+            blue = 0.0F;
+        }
+
         ShapeRenderer.renderLineBox(
                 matrices,
                 vertices,
                 box.inflate(0.05),
-                1.0F,
-                1.0F,
-                0.0F,
+                red,
+                green,
+                blue,
                 1.0F
         );
 
