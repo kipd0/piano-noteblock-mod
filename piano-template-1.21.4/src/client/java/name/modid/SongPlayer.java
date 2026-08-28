@@ -43,6 +43,8 @@ public class SongPlayer {
         highlightedNote = -1;
 
         song = null;
+
+        currentIndex = 0;
     }
 
     public boolean isPlaying() {
@@ -53,6 +55,45 @@ public class SongPlayer {
     public int getHighlightedNote() {
 
         return highlightedNote;
+    }
+
+    public int getCurrentIndex() {
+
+        return currentIndex;
+    }
+
+    public boolean useAlternateColor() {
+
+        if (!playing ||
+                song == null ||
+                currentIndex < 0 ||
+                currentIndex >= song.notes.size()) {
+
+            return false;
+        }
+
+        int currentNote =
+                song.notes
+                        .get(currentIndex)
+                        .noteBlock;
+
+        int repeatPosition = 0;
+
+        for (int i = currentIndex - 1;
+             i >= 0;
+             i--) {
+
+            if (song.notes
+                    .get(i)
+                    .noteBlock != currentNote) {
+
+                break;
+            }
+
+            repeatPosition++;
+        }
+
+        return repeatPosition % 2 == 1;
     }
 
     public void tick(Minecraft client) {
