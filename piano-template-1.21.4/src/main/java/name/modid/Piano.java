@@ -1,30 +1,80 @@
 package name.modid;
 
-import net.fabricmc.api.ModInitializer;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
 
-import net.minecraft.resources.ResourceLocation;
+public class PianoClient implements ClientModInitializer {
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+    public static KeyMapping OPEN_NOTE_BLOCKS;
+    public static KeyMapping OPEN_SONG_EDITOR;
+    public static KeyMapping PLAY_SONG;
 
-public class Piano implements ModInitializer {
-	public static final String MOD_ID = "piano";
+    public static PianoConfig CONFIG;
+    public static SongPlayer PLAYER;
 
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    @Override
+    public void onInitializeClient() {
 
-	@Override
-	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
+        CONFIG = PianoConfig.load();
+        PLAYER = new SongPlayer();
 
-		LOGGER.info("Hello Fabric world!");
-	}
+        OPEN_NOTE_BLOCKS = KeyBindingHelper.registerKeyBinding(
+                new KeyMapping(
+                        "key.piano.note_blocks",
+                        InputConstants.Type.KEYSYM,
+                        GLFW.GLFW_KEY_N,
+                        "category.piano"
+                )
+        );
 
-	public static ResourceLocation id(String path) {
-		return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
-	}
+        OPEN_SONG_EDITOR = KeyBindingHelper.registerKeyBinding(
+                new KeyMapping(
+                        "key.piano.song_editor",
+                        InputConstants.Type.KEYSYM,
+                        GLFW.GLFW_KEY_K,
+                        "category.piano"
+                )
+        );
+
+        PLAY_SONG = KeyBindingHelper.registerKeyBinding(
+                new KeyMapping(
+                        "key.piano.play_song",
+                        InputConstants.Type.KEYSYM,
+                        GLFW.GLFW_KEY_P,
+                        "category.piano"
+                )
+        );
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+
+            while (OPEN_NOTE_BLOCKS.consumeClick()) {
+                if (client.screen == null) {
+                    client.setScreen(new NoteBlockScreen());
+                }
+            }
+
+            while (OPEN_SONG_EDITOR.consumeClick()) {
+                if (client.screen == null) {
+                    client.setScreen(new SongScreen());
+                }
+            }
+
+            while (PLAY_SONG.consumeClick()) {
+
+                if (PLAYER.isPlaying()) {
+                    PLAYER.stop();
+                } else {
+                    PLAYER.play(CONFIG.getCurrentSong());
+                }
+            }
+
+            PLAYER.tick(client);
+        });
+    }
 }
