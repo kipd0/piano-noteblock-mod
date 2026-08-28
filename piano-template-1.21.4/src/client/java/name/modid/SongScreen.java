@@ -1,25 +1,21 @@
 package name.modid;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 public class SongScreen extends Screen {
 
+    private EditBox songNameBox;
     private EditBox noteBox;
     private EditBox timeBox;
 
     private String message = "";
 
     public SongScreen() {
-
-        super(
-                net.minecraft.network.chat.Component.literal(
-                        "Song Editor"
-                )
-        );
+        super(Component.literal("Song Editor"));
     }
 
     @Override
@@ -27,45 +23,102 @@ public class SongScreen extends Screen {
 
         int centerX = width / 2;
 
+        songNameBox =
+                new EditBox(
+                        font,
+                        centerX - 100,
+                        50,
+                        200,
+                        20,
+                        Component.literal("Song Name")
+                );
+
+        songNameBox.setValue(
+                PianoClient.CONFIG.currentSong
+        );
+
         noteBox =
                 new EditBox(
                         font,
                         centerX - 100,
-                        70,
+                        100,
                         80,
                         20,
-                        net.minecraft.network.chat.Component.literal(
-                                "Note"
-                        )
+                        Component.literal("Note")
                 );
 
         timeBox =
                 new EditBox(
                         font,
                         centerX + 20,
-                        70,
+                        100,
                         80,
                         20,
-                        net.minecraft.network.chat.Component.literal(
-                                "Time"
-                        )
+                        Component.literal("Time")
                 );
 
         noteBox.setValue("1");
         timeBox.setValue("0.5");
 
+        addRenderableWidget(songNameBox);
         addRenderableWidget(noteBox);
         addRenderableWidget(timeBox);
 
         addRenderableWidget(
                 Button.builder(
-                        net.minecraft.network.chat.Component.literal(
-                                "Add Note"
-                        ),
+                        Component.literal("New Song"),
+                        button -> newSong()
+                ).bounds(
+                        centerX - 100,
+                        130,
+                        95,
+                        20
+                ).build()
+        );
+
+        addRenderableWidget(
+                Button.builder(
+                        Component.literal("Save Song"),
+                        button -> saveSong()
+                ).bounds(
+                        centerX + 5,
+                        130,
+                        95,
+                        20
+                ).build()
+        );
+
+        addRenderableWidget(
+                Button.builder(
+                        Component.literal("Load Song"),
+                        button -> loadSong()
+                ).bounds(
+                        centerX - 100,
+                        160,
+                        95,
+                        20
+                ).build()
+        );
+
+        addRenderableWidget(
+                Button.builder(
+                        Component.literal("Delete Song"),
+                        button -> deleteSong()
+                ).bounds(
+                        centerX + 5,
+                        160,
+                        95,
+                        20
+                ).build()
+        );
+
+        addRenderableWidget(
+                Button.builder(
+                        Component.literal("Add Note"),
                         button -> addNote()
                 ).bounds(
                         centerX - 100,
-                        105,
+                        190,
                         200,
                         20
                 ).build()
@@ -73,9 +126,7 @@ public class SongScreen extends Screen {
 
         addRenderableWidget(
                 Button.builder(
-                        net.minecraft.network.chat.Component.literal(
-                                "Play"
-                        ),
+                        Component.literal("Play"),
                         button -> {
 
                             PianoClient.PLAYER.play(
@@ -86,7 +137,7 @@ public class SongScreen extends Screen {
                         }
                 ).bounds(
                         centerX - 100,
-                        135,
+                        220,
                         95,
                         20
                 ).build()
@@ -94,14 +145,12 @@ public class SongScreen extends Screen {
 
         addRenderableWidget(
                 Button.builder(
-                        net.minecraft.network.chat.Component.literal(
-                                "Stop"
-                        ),
+                        Component.literal("Stop"),
                         button ->
                                 PianoClient.PLAYER.stop()
                 ).bounds(
                         centerX + 5,
-                        135,
+                        220,
                         95,
                         20
                 ).build()
@@ -109,10 +158,10 @@ public class SongScreen extends Screen {
 
         addRenderableWidget(
                 Button.builder(
-                        net.minecraft.network.chat.Component.literal(
-                                "Clear Song"
-                        ),
+                        Component.literal("Clear Current Song"),
                         button -> {
+
+                            PianoClient.PLAYER.stop();
 
                             PianoClient.CONFIG
                                     .getCurrentSong()
@@ -122,12 +171,12 @@ public class SongScreen extends Screen {
                             PianoClient.CONFIG.save();
 
                             message =
-                                    "Song cleared.";
+                                    "Current song cleared.";
 
                         }
                 ).bounds(
                         centerX - 100,
-                        165,
+                        250,
                         200,
                         20
                 ).build()
@@ -135,23 +184,202 @@ public class SongScreen extends Screen {
 
         addRenderableWidget(
                 Button.builder(
-                        net.minecraft.network.chat.Component.literal(
-                                "Done"
-                        ),
+                        Component.literal("Done"),
                         button -> onClose()
                 ).bounds(
                         centerX - 100,
-                        195,
+                        280,
                         200,
                         20
                 ).build()
         );
     }
 
+    private void newSong() {
+
+        PianoClient.PLAYER.stop();
+
+        String name =
+                songNameBox
+                        .getValue()
+                        .trim();
+
+        if (name.isEmpty()) {
+
+            message =
+                    "Enter a song name first.";
+
+            return;
+        }
+
+        if (PianoClient.CONFIG
+                .songs
+                .containsKey(name)) {
+
+            message =
+                    "That song already exists.";
+
+            return;
+        }
+
+        Song song =
+                new Song(name);
+
+        PianoClient.CONFIG
+                .songs
+                .put(name, song);
+
+        PianoClient.CONFIG.currentSong =
+                name;
+
+        PianoClient.CONFIG.save();
+
+        message =
+                "Created song: " + name;
+    }
+
+    private void saveSong() {
+
+        String newName =
+                songNameBox
+                        .getValue()
+                        .trim();
+
+        if (newName.isEmpty()) {
+
+            message =
+                    "Enter a song name.";
+
+            return;
+        }
+
+        String oldName =
+                PianoClient.CONFIG.currentSong;
+
+        Song song =
+                PianoClient.CONFIG
+                        .getCurrentSong();
+
+        /*
+         * Rename current song if the text box
+         * contains a different name.
+         */
+        if (!newName.equals(oldName)) {
+
+            PianoClient.CONFIG
+                    .songs
+                    .remove(oldName);
+
+            song.name = newName;
+
+            PianoClient.CONFIG
+                    .songs
+                    .put(newName, song);
+
+            PianoClient.CONFIG.currentSong =
+                    newName;
+        }
+
+        PianoClient.CONFIG.save();
+
+        message =
+                "Saved song: " + newName;
+    }
+
+    private void loadSong() {
+
+        PianoClient.PLAYER.stop();
+
+        String name =
+                songNameBox
+                        .getValue()
+                        .trim();
+
+        if (!PianoClient.CONFIG
+                .songs
+                .containsKey(name)) {
+
+            message =
+                    "Song not found: " + name;
+
+            return;
+        }
+
+        PianoClient.CONFIG.currentSong =
+                name;
+
+        PianoClient.CONFIG.save();
+
+        message =
+                "Loaded song: " + name;
+    }
+
+    private void deleteSong() {
+
+        PianoClient.PLAYER.stop();
+
+        String name =
+                songNameBox
+                        .getValue()
+                        .trim();
+
+        if (!PianoClient.CONFIG
+                .songs
+                .containsKey(name)) {
+
+            message =
+                    "Song not found.";
+
+            return;
+        }
+
+        PianoClient.CONFIG
+                .songs
+                .remove(name);
+
+        if (PianoClient.CONFIG
+                .songs
+                .isEmpty()) {
+
+            Song replacement =
+                    new Song("My Song");
+
+            PianoClient.CONFIG
+                    .songs
+                    .put(
+                            "My Song",
+                            replacement
+                    );
+
+            PianoClient.CONFIG.currentSong =
+                    "My Song";
+
+        } else {
+
+            String nextSong =
+                    PianoClient.CONFIG
+                            .songs
+                            .keySet()
+                            .iterator()
+                            .next();
+
+            PianoClient.CONFIG.currentSong =
+                    nextSong;
+        }
+
+        songNameBox.setValue(
+                PianoClient.CONFIG.currentSong
+        );
+
+        PianoClient.CONFIG.save();
+
+        message =
+                "Deleted song: " + name;
+    }
+
     private void addNote() {
 
         int note;
-
         double seconds;
 
         try {
@@ -236,15 +464,23 @@ public class SongScreen extends Screen {
                 font,
                 "Song Editor",
                 centerX,
-                30,
+                20,
                 0xFFFFFF
+        );
+
+        graphics.drawString(
+                font,
+                "Song Name",
+                centerX - 100,
+                35,
+                0xAAAAAA
         );
 
         graphics.drawString(
                 font,
                 "Note #",
                 centerX - 100,
-                55,
+                85,
                 0xAAAAAA
         );
 
@@ -252,15 +488,24 @@ public class SongScreen extends Screen {
                 font,
                 "Seconds",
                 centerX + 20,
-                55,
+                85,
                 0xAAAAAA
+        );
+
+        graphics.drawCenteredString(
+                font,
+                "Current: " +
+                        PianoClient.CONFIG.currentSong,
+                centerX,
+                310,
+                0xFFFF55
         );
 
         Song song =
                 PianoClient.CONFIG
                         .getCurrentSong();
 
-        int y = 235;
+        int y = 335;
 
         for (int i = 0;
              i < song.notes.size();
@@ -295,7 +540,7 @@ public class SongScreen extends Screen {
                     font,
                     message,
                     centerX,
-                    220,
+                    320,
                     0xFFFFFF
             );
         }
@@ -310,7 +555,6 @@ public class SongScreen extends Screen {
 
     @Override
     public boolean isPauseScreen() {
-
         return false;
     }
 }
