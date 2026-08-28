@@ -14,7 +14,7 @@ public class PianoClient implements ClientModInitializer {
     public static KeyMapping OPEN_SONG_EDITOR;
     public static KeyMapping PLAY_SONG;
 
-    public static final PianoConfig CONFIG = new PianoConfig();
+    public static final PianoConfig CONFIG = PianoConfig.load();
     public static final SongPlayer PLAYER = new SongPlayer();
 
     @Override
