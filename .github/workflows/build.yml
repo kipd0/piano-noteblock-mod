@@ -16,15 +16,19 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: '21'
+          cache: gradle
 
-      - name: Make gradlew executable
-        run: chmod +x gradlew
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
 
-      - name: Build
+      - name: Check Java
+        run: java -version
+
+      - name: Build Mod
         run: ./gradlew build
 
-      - name: Upload mod
+      - name: Upload Mod
         uses: actions/upload-artifact@v4
         with:
           name: piano-mod
