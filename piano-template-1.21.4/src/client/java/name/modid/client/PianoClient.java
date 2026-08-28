@@ -1,10 +1,27 @@
-package name.modid.client;
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
 
-import net.fabricmc.api.ClientModInitializer;
+            while (OPEN_NOTE_BLOCKS.consumeClick()) {
+                if (client.screen == null) {
+                    client.setScreen(new NoteBlockScreen());
+                }
+            }
 
-public class PianoClient implements ClientModInitializer {
-	@Override
-	public void onInitializeClient() {
-		// This entrypoint is suitable for setting up client-specific logic, such as rendering.
-	}
-}
+            while (OPEN_SONG_EDITOR.consumeClick()) {
+                if (client.screen == null) {
+                    client.setScreen(new SongScreen());
+                }
+            }
+
+            while (PLAY_SONG.consumeClick()) {
+
+                if (PLAYER.isPlaying()) {
+                    PLAYER.stop();
+                } else {
+                    PLAYER.play(CONFIG.getCurrentSong());
+                }
+            }
+
+            PLAYER.tick(client);
+        });
+
+        NoteBlockRenderer.register();
