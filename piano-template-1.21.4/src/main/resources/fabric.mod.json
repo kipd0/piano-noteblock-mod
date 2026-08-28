@@ -19,7 +19,7 @@
 			"name.modid.Piano"
 		],
 		"client": [
-			"name.modid.client.PianoClient"
+			"name.modid.PianoClient"
 		]
 	},
 	"mixins": [
