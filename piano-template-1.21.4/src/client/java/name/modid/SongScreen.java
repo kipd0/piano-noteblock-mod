@@ -13,23 +13,15 @@ import java.util.List;
 public class SongScreen extends Screen {
 
     private EditBox songNameBox;
+    private EditBox importBox;
+    private EditBox entryBox;
     private EditBox noteBox;
     private EditBox timeBox;
-    private EditBox entryBox;
 
     private String message = "";
 
-    /*
-     * Song selected from the list.
-     * Selecting does NOT immediately load it.
-     * Press "Load Selected".
-     */
     private String selectedSongName = null;
 
-    /*
-     * Song-list page.
-     * 5 songs are displayed at once.
-     */
     private int songPage = 0;
 
     private static final int SONGS_PER_PAGE = 5;
@@ -41,12 +33,7 @@ public class SongScreen extends Screen {
     private Button nextSongPageButton;
 
     public SongScreen() {
-
-        super(
-                Component.literal(
-                        "Song Editor"
-                )
-        );
+        super(Component.literal("Song Editor"));
     }
 
     @Override
@@ -54,20 +41,15 @@ public class SongScreen extends Screen {
 
         int centerX = width / 2;
 
-        /*
-         * If nothing is selected yet,
-         * select the currently loaded song.
-         */
         if (selectedSongName == null) {
-
             selectedSongName =
                     PianoClient.CONFIG.currentSong;
         }
 
         /*
-         * ==========================
+         * =========================
          * SONG NAME
-         * ==========================
+         * =========================
          */
 
         songNameBox =
@@ -77,30 +59,18 @@ public class SongScreen extends Screen {
                         45,
                         200,
                         20,
-                        Component.literal(
-                                "Song Name"
-                        )
+                        Component.literal("Song Name")
                 );
 
         songNameBox.setValue(
                 PianoClient.CONFIG.currentSong
         );
 
-        addRenderableWidget(
-                songNameBox
-        );
-
-        /*
-         * ==========================
-         * NEW / SAVE
-         * ==========================
-         */
+        addRenderableWidget(songNameBox);
 
         addRenderableWidget(
                 Button.builder(
-                        Component.literal(
-                                "New Song"
-                        ),
+                        Component.literal("New Song"),
                         button -> newSong()
                 ).bounds(
                         centerX - 100,
@@ -112,9 +82,7 @@ public class SongScreen extends Screen {
 
         addRenderableWidget(
                 Button.builder(
-                        Component.literal(
-                                "Save / Rename"
-                        ),
+                        Component.literal("Save / Rename"),
                         button -> saveSong()
                 ).bounds(
                         centerX + 5,
@@ -125,98 +93,103 @@ public class SongScreen extends Screen {
         );
 
         /*
-         * ==========================
-         * NOTE INPUT
-         * ==========================
+         * =========================
+         * IMPORT SONG
+         * =========================
+         */
+
+        importBox =
+                new EditBox(
+                        font,
+                        centerX - 100,
+                        110,
+                        200,
+                        20,
+                        Component.literal("Import Song")
+                );
+
+        /*
+         * Allow long songs.
+         */
+        importBox.setMaxLength(10000);
+
+        addRenderableWidget(importBox);
+
+        addRenderableWidget(
+                Button.builder(
+                        Component.literal("Import Song"),
+                        button -> importSong()
+                ).bounds(
+                        centerX - 100,
+                        135,
+                        200,
+                        20
+                ).build()
+        );
+
+        /*
+         * =========================
+         * NOTE EDITOR
+         * =========================
          */
 
         entryBox =
                 new EditBox(
                         font,
                         centerX - 100,
-                        120,
+                        185,
                         55,
                         20,
-                        Component.literal(
-                                "Entry"
-                        )
+                        Component.literal("Entry")
                 );
 
         noteBox =
                 new EditBox(
                         font,
                         centerX - 30,
-                        120,
+                        185,
                         55,
                         20,
-                        Component.literal(
-                                "Note"
-                        )
+                        Component.literal("Note")
                 );
 
         timeBox =
                 new EditBox(
                         font,
                         centerX + 40,
-                        120,
+                        185,
                         60,
                         20,
-                        Component.literal(
-                                "Time"
-                        )
+                        Component.literal("Time")
                 );
 
         entryBox.setValue("1");
         noteBox.setValue("1");
         timeBox.setValue("0.5");
 
-        addRenderableWidget(
-                entryBox
-        );
-
-        addRenderableWidget(
-                noteBox
-        );
-
-        addRenderableWidget(
-                timeBox
-        );
-
-        /*
-         * ==========================
-         * ADD NOTE
-         * ==========================
-         */
+        addRenderableWidget(entryBox);
+        addRenderableWidget(noteBox);
+        addRenderableWidget(timeBox);
 
         addRenderableWidget(
                 Button.builder(
-                        Component.literal(
-                                "Add Note"
-                        ),
+                        Component.literal("Add Note"),
                         button -> addNote()
                 ).bounds(
                         centerX - 100,
-                        145,
+                        210,
                         200,
                         20
                 ).build()
         );
 
-        /*
-         * ==========================
-         * LOAD / UPDATE ENTRY
-         * ==========================
-         */
-
         addRenderableWidget(
                 Button.builder(
-                        Component.literal(
-                                "Load Entry"
-                        ),
+                        Component.literal("Load Entry"),
                         button -> loadEntry()
                 ).bounds(
                         centerX - 100,
-                        170,
+                        235,
                         95,
                         20
                 ).build()
@@ -224,59 +197,45 @@ public class SongScreen extends Screen {
 
         addRenderableWidget(
                 Button.builder(
-                        Component.literal(
-                                "Update Entry"
-                        ),
+                        Component.literal("Update Entry"),
                         button -> updateEntry()
                 ).bounds(
                         centerX + 5,
-                        170,
+                        235,
                         95,
                         20
                 ).build()
         );
 
-        /*
-         * ==========================
-         * DELETE ENTRY
-         * ==========================
-         */
-
         addRenderableWidget(
                 Button.builder(
-                        Component.literal(
-                                "Delete Entry"
-                        ),
+                        Component.literal("Delete Entry"),
                         button -> deleteEntry()
                 ).bounds(
                         centerX - 100,
-                        195,
+                        260,
                         200,
                         20
                 ).build()
         );
 
         /*
-         * ==========================
+         * =========================
          * PLAY / STOP
-         * ==========================
+         * =========================
          */
 
         addRenderableWidget(
                 Button.builder(
-                        Component.literal(
-                                "Play"
-                        ),
-                        button -> {
-
-                            PianoClient.PLAYER.play(
-                                    PianoClient.CONFIG
-                                            .getCurrentSong()
-                            );
-                        }
+                        Component.literal("Play"),
+                        button ->
+                                PianoClient.PLAYER.play(
+                                        PianoClient.CONFIG
+                                                .getCurrentSong()
+                                )
                 ).bounds(
                         centerX - 100,
-                        220,
+                        285,
                         95,
                         20
                 ).build()
@@ -284,23 +243,21 @@ public class SongScreen extends Screen {
 
         addRenderableWidget(
                 Button.builder(
-                        Component.literal(
-                                "Stop"
-                        ),
+                        Component.literal("Stop"),
                         button ->
                                 PianoClient.PLAYER.stop()
                 ).bounds(
                         centerX + 5,
-                        220,
+                        285,
                         95,
                         20
                 ).build()
         );
 
         /*
-         * ==========================
+         * =========================
          * CLEAR SONG
-         * ==========================
+         * =========================
          */
 
         addRenderableWidget(
@@ -311,36 +268,28 @@ public class SongScreen extends Screen {
                         button -> clearSong()
                 ).bounds(
                         centerX - 100,
-                        245,
+                        310,
                         200,
                         20
                 ).build()
         );
-
-        /*
-         * ==========================
-         * DONE
-         * ==========================
-         */
 
         addRenderableWidget(
                 Button.builder(
-                        Component.literal(
-                                "Done"
-                        ),
+                        Component.literal("Done"),
                         button -> onClose()
                 ).bounds(
                         centerX - 100,
-                        270,
+                        335,
                         200,
                         20
                 ).build()
         );
 
         /*
-         * ==========================
+         * =========================
          * SAVED SONG LIST
-         * ==========================
+         * =========================
          */
 
         int listX =
@@ -358,13 +307,9 @@ public class SongScreen extends Screen {
 
             Button songButton =
                     Button.builder(
-                            Component.literal(
-                                    "-"
-                            ),
+                            Component.literal("-"),
                             button ->
-                                    selectSongSlot(
-                                            slot
-                                    )
+                                    selectSongSlot(slot)
                     ).bounds(
                             listX,
                             listY + (i * 25),
@@ -372,32 +317,21 @@ public class SongScreen extends Screen {
                             20
                     ).build();
 
-            songButtons.add(
-                    songButton
-            );
+            songButtons.add(songButton);
 
-            addRenderableWidget(
-                    songButton
-            );
+            addRenderableWidget(songButton);
         }
-
-        /*
-         * Previous page
-         */
 
         previousSongPageButton =
                 Button.builder(
-                        Component.literal(
-                                "<"
-                        ),
+                        Component.literal("<"),
                         button -> {
 
                             if (songPage > 0) {
-
                                 songPage--;
-
                                 refreshSongList();
                             }
+
                         }
                 ).bounds(
                         listX,
@@ -410,27 +344,19 @@ public class SongScreen extends Screen {
                 previousSongPageButton
         );
 
-        /*
-         * Next page
-         */
-
         nextSongPageButton =
                 Button.builder(
-                        Component.literal(
-                                ">"
-                        ),
+                        Component.literal(">"),
                         button -> {
 
                             int pages =
                                     getSongPageCount();
 
-                            if (songPage <
-                                    pages - 1) {
-
+                            if (songPage < pages - 1) {
                                 songPage++;
-
                                 refreshSongList();
                             }
+
                         }
                 ).bounds(
                         listX + 105,
@@ -442,12 +368,6 @@ public class SongScreen extends Screen {
         addRenderableWidget(
                 nextSongPageButton
         );
-
-        /*
-         * ==========================
-         * LOAD SELECTED SONG
-         * ==========================
-         */
 
         addRenderableWidget(
                 Button.builder(
@@ -463,12 +383,6 @@ public class SongScreen extends Screen {
                         20
                 ).build()
         );
-
-        /*
-         * ==========================
-         * DELETE SELECTED SONG
-         * ==========================
-         */
 
         addRenderableWidget(
                 Button.builder(
@@ -489,9 +403,156 @@ public class SongScreen extends Screen {
     }
 
     /*
-     * ============================================================
+     * =========================================================
+     * IMPORT SONG
+     * =========================================================
+     *
+     * Format:
+     *
+     * 4:0.261,6:0.453,7:0.261
+     *
+     * note:seconds
+     */
+
+    private void importSong() {
+
+        PianoClient.PLAYER.stop();
+
+        String text =
+                importBox
+                        .getValue()
+                        .trim();
+
+        if (text.isEmpty()) {
+
+            message =
+                    "Paste a song first.";
+
+            return;
+        }
+
+        String[] entries =
+                text.split(",");
+
+        List<SongNote> importedNotes =
+                new ArrayList<>();
+
+        for (int i = 0;
+             i < entries.length;
+             i++) {
+
+            String entry =
+                    entries[i].trim();
+
+            if (entry.isEmpty()) {
+                continue;
+            }
+
+            String[] parts =
+                    entry.split(":");
+
+            if (parts.length != 2) {
+
+                message =
+                        "Bad import at entry " +
+                                (i + 1);
+
+                return;
+            }
+
+            int note;
+            double seconds;
+
+            try {
+
+                note =
+                        Integer.parseInt(
+                                parts[0].trim()
+                        );
+
+                seconds =
+                        Double.parseDouble(
+                                parts[1].trim()
+                        );
+
+            } catch (NumberFormatException e) {
+
+                message =
+                        "Bad number at entry " +
+                                (i + 1);
+
+                return;
+            }
+
+            if (note < 1 ||
+                    note > 24) {
+
+                message =
+                        "Note must be 1-24 at entry " +
+                                (i + 1);
+
+                return;
+            }
+
+            if (seconds <= 0) {
+
+                message =
+                        "Time must be > 0 at entry " +
+                                (i + 1);
+
+                return;
+            }
+
+            long milliseconds =
+                    Math.round(
+                            seconds * 1000.0
+                    );
+
+            importedNotes.add(
+                    new SongNote(
+                            note,
+                            milliseconds
+                    )
+            );
+        }
+
+        if (importedNotes.isEmpty()) {
+
+            message =
+                    "No notes found.";
+
+            return;
+        }
+
+        /*
+         * Only replace the current song AFTER
+         * the entire import has been validated.
+         */
+
+        Song currentSong =
+                PianoClient.CONFIG
+                        .getCurrentSong();
+
+        currentSong.notes.clear();
+
+        currentSong.notes.addAll(
+                importedNotes
+        );
+
+        PianoClient.CONFIG.save();
+
+        entryBox.setValue("1");
+
+        message =
+                "Imported " +
+                        importedNotes.size() +
+                        " notes.";
+    }
+
+    /*
+     * =========================================================
      * SONG LIST
-     * ============================================================
+     * =========================================================
      */
 
     private List<String> getSongNames() {
@@ -503,9 +564,6 @@ public class SongScreen extends Screen {
                                 .keySet()
                 );
 
-        /*
-         * Keep the list in alphabetical order.
-         */
         Collections.sort(
                 names,
                 String.CASE_INSENSITIVE_ORDER
@@ -535,13 +593,10 @@ public class SongScreen extends Screen {
                 getSongPageCount();
 
         if (songPage >= pageCount) {
-
-            songPage =
-                    pageCount - 1;
+            songPage = pageCount - 1;
         }
 
         if (songPage < 0) {
-
             songPage = 0;
         }
 
@@ -563,13 +618,6 @@ public class SongScreen extends Screen {
 
                 String name =
                         names.get(index);
-
-                /*
-                 * Add markers:
-                 *
-                 * > = selected
-                 * * = currently loaded
-                 */
 
                 String prefix = "";
 
@@ -597,9 +645,7 @@ public class SongScreen extends Screen {
             } else {
 
                 button.setMessage(
-                        Component.literal(
-                                "-"
-                        )
+                        Component.literal("-")
                 );
 
                 button.active = false;
@@ -610,8 +656,7 @@ public class SongScreen extends Screen {
                 songPage > 0;
 
         nextSongPageButton.active =
-                songPage <
-                        pageCount - 1;
+                songPage < pageCount - 1;
     }
 
     private void selectSongSlot(
@@ -635,10 +680,6 @@ public class SongScreen extends Screen {
         selectedSongName =
                 names.get(index);
 
-        /*
-         * Put selected song's name
-         * into the name box too.
-         */
         songNameBox.setValue(
                 selectedSongName
         );
@@ -683,6 +724,8 @@ public class SongScreen extends Screen {
 
         PianoClient.CONFIG.save();
 
+        entryBox.setValue("1");
+
         message =
                 "Loaded: " +
                         selectedSongName;
@@ -691,9 +734,9 @@ public class SongScreen extends Screen {
     }
 
     /*
-     * ============================================================
+     * =========================================================
      * NEW SONG
-     * ============================================================
+     * =========================================================
      */
 
     private void newSong() {
@@ -741,9 +784,7 @@ public class SongScreen extends Screen {
 
         PianoClient.CONFIG.save();
 
-        movePageToSong(
-                name
-        );
+        movePageToSong(name);
 
         message =
                 "Created: " + name;
@@ -752,9 +793,9 @@ public class SongScreen extends Screen {
     }
 
     /*
-     * ============================================================
-     * SAVE / RENAME SONG
-     * ============================================================
+     * =========================================================
+     * SAVE / RENAME
+     * =========================================================
      */
 
     private void saveSong() {
@@ -780,10 +821,6 @@ public class SongScreen extends Screen {
                 PianoClient.CONFIG
                         .getCurrentSong();
 
-        /*
-         * If we're renaming, don't accidentally
-         * overwrite another saved song.
-         */
         if (!newName.equals(oldName)) {
 
             if (PianoClient.CONFIG
@@ -791,7 +828,7 @@ public class SongScreen extends Screen {
                     .containsKey(newName)) {
 
                 message =
-                        "A song with that name already exists.";
+                        "That song already exists.";
 
                 return;
             }
@@ -819,9 +856,7 @@ public class SongScreen extends Screen {
 
         PianoClient.CONFIG.save();
 
-        movePageToSong(
-                newName
-        );
+        movePageToSong(newName);
 
         message =
                 "Saved: " +
@@ -831,9 +866,9 @@ public class SongScreen extends Screen {
     }
 
     /*
-     * ============================================================
-     * DELETE SELECTED SONG
-     * ============================================================
+     * =========================================================
+     * DELETE SONG
+     * =========================================================
      */
 
     private void deleteSelectedSong() {
@@ -875,17 +910,12 @@ public class SongScreen extends Screen {
                         deletedName
                 );
 
-        /*
-         * There must always be at least one song.
-         */
         if (PianoClient.CONFIG
                 .songs
                 .isEmpty()) {
 
             Song replacement =
-                    new Song(
-                            "My Song"
-                    );
+                    new Song("My Song");
 
             PianoClient.CONFIG
                     .songs
@@ -931,10 +961,6 @@ public class SongScreen extends Screen {
         refreshSongList();
     }
 
-    /*
-     * Put the list on the page containing
-     * the specified song.
-     */
     private void movePageToSong(
             String name
     ) {
@@ -954,9 +980,9 @@ public class SongScreen extends Screen {
     }
 
     /*
-     * ============================================================
+     * =========================================================
      * ADD NOTE
-     * ============================================================
+     * =========================================================
      */
 
     private void addNote() {
@@ -1001,18 +1027,13 @@ public class SongScreen extends Screen {
 
         message =
                 "Added entry " +
-                        newEntry +
-                        ": #" +
-                        note +
-                        " for " +
-                        milliseconds / 1000.0 +
-                        "s";
+                        newEntry;
     }
 
     /*
-     * ============================================================
-     * LOAD EXISTING ENTRY
-     * ============================================================
+     * =========================================================
+     * LOAD ENTRY
+     * =========================================================
      */
 
     private void loadEntry() {
@@ -1038,8 +1059,8 @@ public class SongScreen extends Screen {
 
         timeBox.setValue(
                 String.valueOf(
-                        note.durationMs
-                                / 1000.0
+                        note.durationMs /
+                                1000.0
                 )
         );
 
@@ -1049,9 +1070,9 @@ public class SongScreen extends Screen {
     }
 
     /*
-     * ============================================================
-     * UPDATE EXISTING ENTRY
-     * ============================================================
+     * =========================================================
+     * UPDATE ENTRY
+     * =========================================================
      */
 
     private void updateEntry() {
@@ -1093,18 +1114,13 @@ public class SongScreen extends Screen {
 
         message =
                 "Updated entry " +
-                        (index + 1) +
-                        " to #" +
-                        note +
-                        " / " +
-                        milliseconds / 1000.0 +
-                        "s";
+                        (index + 1);
     }
 
     /*
-     * ============================================================
+     * =========================================================
      * DELETE ENTRY
-     * ============================================================
+     * =========================================================
      */
 
     private void deleteEntry() {
@@ -1133,30 +1149,44 @@ public class SongScreen extends Screen {
     }
 
     /*
-     * ============================================================
-     * CLEAR CURRENT SONG
-     * ============================================================
+     * =========================================================
+     * CLEAR SONG
+     * =========================================================
      */
 
     private void clearSong() {
 
         PianoClient.PLAYER.stop();
 
-        PianoClient.CONFIG
-                .getCurrentSong()
-                .notes
-                .clear();
+        String currentName =
+                PianoClient.CONFIG.currentSong;
+
+        Song currentSong =
+                PianoClient.CONFIG
+                        .songs
+                        .get(currentName);
+
+        if (currentSong == null) {
+
+            message =
+                    "Current song not found.";
+
+            return;
+        }
+
+        currentSong.notes.clear();
 
         PianoClient.CONFIG.save();
 
         message =
-                "Current song cleared.";
+                "Cleared: " +
+                        currentName;
     }
 
     /*
-     * ============================================================
+     * =========================================================
      * INPUT HELPERS
-     * ============================================================
+     * =========================================================
      */
 
     private Integer readEntryIndex() {
@@ -1184,8 +1214,7 @@ public class SongScreen extends Screen {
                         .getCurrentSong();
 
         if (entry < 1 ||
-                entry >
-                        song.notes.size()) {
+                entry > song.notes.size()) {
 
             message =
                     "Entry must be 1-" +
@@ -1194,10 +1223,6 @@ public class SongScreen extends Screen {
             return null;
         }
 
-        /*
-         * Screen uses entry #1.
-         * Java List uses index 0.
-         */
         return entry - 1;
     }
 
@@ -1262,15 +1287,14 @@ public class SongScreen extends Screen {
         }
 
         return Math.round(
-                seconds *
-                        1000.0
+                seconds * 1000.0
         );
     }
 
     /*
-     * ============================================================
+     * =========================================================
      * RENDER
-     * ============================================================
+     * =========================================================
      */
 
     @Override
@@ -1294,9 +1318,6 @@ public class SongScreen extends Screen {
         int listX =
                 centerX - 300;
 
-        /*
-         * Title
-         */
         graphics.drawCenteredString(
                 font,
                 "Song Editor",
@@ -1305,9 +1326,6 @@ public class SongScreen extends Screen {
                 0xFFFFFF
         );
 
-        /*
-         * Song list title
-         */
         graphics.drawString(
                 font,
                 "Saved Songs",
@@ -1316,9 +1334,46 @@ public class SongScreen extends Screen {
                 0xFFFF55
         );
 
-        /*
-         * Page number
-         */
+        graphics.drawString(
+                font,
+                "Song Name",
+                centerX - 100,
+                32,
+                0xAAAAAA
+        );
+
+        graphics.drawString(
+                font,
+                "Import: note:seconds,note:seconds,...",
+                centerX - 100,
+                97,
+                0xAAAAAA
+        );
+
+        graphics.drawString(
+                font,
+                "Entry",
+                centerX - 100,
+                172,
+                0xAAAAAA
+        );
+
+        graphics.drawString(
+                font,
+                "Note #",
+                centerX - 30,
+                172,
+                0xAAAAAA
+        );
+
+        graphics.drawString(
+                font,
+                "Seconds",
+                centerX + 40,
+                172,
+                0xAAAAAA
+        );
+
         graphics.drawString(
                 font,
                 "Page " +
@@ -1330,9 +1385,6 @@ public class SongScreen extends Screen {
                 0xAAAAAA
         );
 
-        /*
-         * Markers explanation
-         */
         graphics.drawString(
                 font,
                 "> selected",
@@ -1349,62 +1401,32 @@ public class SongScreen extends Screen {
                 0xAAAAAA
         );
 
-        /*
-         * Input labels
-         */
-        graphics.drawString(
-                font,
-                "Song Name",
-                centerX - 100,
-                32,
-                0xAAAAAA
-        );
-
-        graphics.drawString(
-                font,
-                "Entry",
-                centerX - 100,
-                105,
-                0xAAAAAA
-        );
-
-        graphics.drawString(
-                font,
-                "Note #",
-                centerX - 30,
-                105,
-                0xAAAAAA
-        );
-
-        graphics.drawString(
-                font,
-                "Seconds",
-                centerX + 40,
-                105,
-                0xAAAAAA
-        );
-
-        /*
-         * Current song
-         */
         graphics.drawCenteredString(
                 font,
                 "Current: " +
                         PianoClient.CONFIG
                                 .currentSong,
                 centerX,
-                300,
+                365,
                 0xFFFF55
         );
 
-        /*
-         * Current song's notes
-         */
+        if (!message.isEmpty()) {
+
+            graphics.drawCenteredString(
+                    font,
+                    message,
+                    centerX,
+                    380,
+                    0xFFFFFF
+            );
+        }
+
         Song song =
                 PianoClient.CONFIG
                         .getCurrentSong();
 
-        int y = 325;
+        int y = 400;
 
         for (int i = 0;
              i < song.notes.size();
@@ -1416,23 +1438,15 @@ public class SongScreen extends Screen {
             int color =
                     0xFFFFFF;
 
-            /*
-             * Show the currently entered
-             * entry number in yellow.
-             */
             try {
 
                 int selectedEntry =
                         Integer.parseInt(
-                                entryBox
-                                        .getValue()
+                                entryBox.getValue()
                         );
 
-                if (selectedEntry ==
-                        i + 1) {
-
-                    color =
-                            0xFFFF55;
+                if (selectedEntry == i + 1) {
+                    color = 0xFFFF55;
                 }
 
             } catch (
@@ -1446,8 +1460,8 @@ public class SongScreen extends Screen {
                             ".  #" +
                             note.noteBlock +
                             "    " +
-                            (note.durationMs
-                                    / 1000.0) +
+                            (note.durationMs /
+                                    1000.0) +
                             "s",
                     centerX - 100,
                     y,
@@ -1456,25 +1470,9 @@ public class SongScreen extends Screen {
 
             y += 12;
 
-            if (y >
-                    height - 15) {
-
+            if (y > height - 15) {
                 break;
             }
-        }
-
-        /*
-         * Status/error message
-         */
-        if (!message.isEmpty()) {
-
-            graphics.drawCenteredString(
-                    font,
-                    message,
-                    centerX,
-                    290,
-                    0xFFFFFF
-            );
         }
 
         super.render(
@@ -1487,7 +1485,6 @@ public class SongScreen extends Screen {
 
     @Override
     public boolean isPauseScreen() {
-
         return false;
     }
 }
