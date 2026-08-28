@@ -15,9 +15,6 @@
 	"icon": "assets/piano/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"main": [
-			"name.modid.Piano"
-		],
 		"client": [
 			"name.modid.PianoClient"
 		]
