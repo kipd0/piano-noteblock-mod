@@ -8,6 +8,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: piano-template-1.21.4
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,4 +36,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: piano-mod
-          path: build/libs/*.jar
+          path: piano-template-1.21.4/build/libs/*.jar
