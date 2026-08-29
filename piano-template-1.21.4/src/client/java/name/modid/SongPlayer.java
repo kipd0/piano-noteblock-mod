@@ -20,11 +20,8 @@ public class SongPlayer {
         this.song = song;
         this.currentIndex = 0;
         this.playing = true;
-
         this.highlightedNote =
-                song.notes
-                        .get(0)
-                        .noteBlock;
+                song.notes.get(0).noteBlock;
     }
 
     public void stop() {
@@ -80,46 +77,19 @@ public class SongPlayer {
                 .noteBlock;
     }
 
-    public int getNextNextNote() {
-
-        if (!playing ||
-                song == null) {
-            return -1;
-        }
-
-        int index =
-                currentIndex + 2;
-
-        if (index >= song.notes.size()) {
-            return -1;
-        }
-
-        return song.notes
-                .get(index)
-                .noteBlock;
-    }
-
     /*
-     * =========================================================
-     * REPEAT COUNT
-     * =========================================================
-     *
-     * Counts how many consecutive clicks remain
-     * on the current block.
-     *
-     * Example song:
+     * Counts how many clicks on THIS SAME
+     * note are still remaining.
      *
      * 6,6,6,6,4
      *
-     * First #6  -> 4
-     * Second #6 -> 3
-     * Third #6  -> 2
-     * Fourth #6 -> 1
+     * start = 4
+     * click = 3
+     * click = 2
+     * click = 1
      *
-     * The renderer hides the number when this
-     * returns 1.
+     * Renderer hides 1.
      */
-
     public int getRemainingRepeatCount() {
 
         if (!playing ||
@@ -134,9 +104,9 @@ public class SongPlayer {
                         .get(currentIndex)
                         .noteBlock;
 
-        int count = 0;
+        int remaining = 1;
 
-        for (int i = currentIndex;
+        for (int i = currentIndex + 1;
              i < song.notes.size();
              i++) {
 
@@ -146,17 +116,11 @@ public class SongPlayer {
                 break;
             }
 
-            count++;
+            remaining++;
         }
 
-        return count;
+        return remaining;
     }
-
-    /*
-     * =========================================================
-     * CORRECT CLICK
-     * =========================================================
-     */
 
     public void clickNote(int noteNumber) {
 
@@ -168,70 +132,29 @@ public class SongPlayer {
         }
 
         /*
-         * Wrong block.
-         *
-         * Do absolutely nothing.
+         * Wrong note = do nothing.
          */
-
         if (noteNumber != highlightedNote) {
             return;
         }
 
         /*
-         * Correct block.
+         * Correct note.
          */
-
         currentIndex++;
 
         /*
          * Song finished.
          */
-
         if (currentIndex >= song.notes.size()) {
             stop();
             return;
         }
 
-        /*
-         * Advance highlight.
-         */
-
         highlightedNote =
                 song.notes
                         .get(currentIndex)
                         .noteBlock;
-    }
-
-    public boolean useAlternateColor() {
-
-        if (!playing ||
-                song == null ||
-                currentIndex < 0 ||
-                currentIndex >= song.notes.size()) {
-            return false;
-        }
-
-        int currentNote =
-                song.notes
-                        .get(currentIndex)
-                        .noteBlock;
-
-        int repeatPosition = 0;
-
-        for (int i = currentIndex - 1;
-             i >= 0;
-             i--) {
-
-            if (song.notes
-                    .get(i)
-                    .noteBlock != currentNote) {
-                break;
-            }
-
-            repeatPosition++;
-        }
-
-        return repeatPosition % 2 == 1;
     }
 
     public void tick(Minecraft client) {
