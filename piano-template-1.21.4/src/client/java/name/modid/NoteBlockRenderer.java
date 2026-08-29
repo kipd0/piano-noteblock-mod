@@ -29,12 +29,10 @@ public class NoteBlockRenderer {
         }
 
         int currentNote =
-                PianoClient.PLAYER
-                        .getCurrentNote();
+                PianoClient.PLAYER.getCurrentNote();
 
         int nextNote =
-                PianoClient.PLAYER
-                        .getNextNote();
+                PianoClient.PLAYER.getNextNote();
 
         int repeatCount =
                 PianoClient.PLAYER
@@ -71,12 +69,13 @@ public class NoteBlockRenderer {
         double camZ =
                 camera.getPosition().z;
 
-        matrices.pushPose();
-
         /*
-         * Move world rendering relative
-         * to the camera.
+         * =====================================================
+         * BLOCK COLORS
+         * =====================================================
          */
+
+        matrices.pushPose();
 
         matrices.translate(
                 -camX,
@@ -90,13 +89,9 @@ public class NoteBlockRenderer {
                 );
 
         /*
-         * =====================================================
          * CURRENT BLOCK
-         * =====================================================
          *
-         * Always green.
-         *
-         * Repeated notes are ALSO green now.
+         * Green.
          */
 
         renderFilledBlock(
@@ -104,25 +99,20 @@ public class NoteBlockRenderer {
                 vertices,
                 currentNote,
 
-                // GREEN
                 0.25F,
                 1.00F,
                 0.35F,
 
-                // TRANSPARENCY
                 0.45F
         );
 
         /*
-         * =====================================================
          * NEXT BLOCK
-         * =====================================================
          *
-         * Only show blue when the next note
-         * is a DIFFERENT block.
+         * Blue.
          *
-         * If it is the same block, the white
-         * repeat number handles that instead.
+         * Don't draw blue when the
+         * next note is the same block.
          */
 
         if (nextNote >= 1 &&
@@ -134,12 +124,10 @@ public class NoteBlockRenderer {
                     vertices,
                     nextNote,
 
-                    // SKY BLUE
                     0.20F,
                     0.55F,
                     1.00F,
 
-                    // TRANSPARENCY
                     0.30F
             );
         }
@@ -150,15 +138,6 @@ public class NoteBlockRenderer {
          * =====================================================
          * REPEAT NUMBER
          * =====================================================
-         *
-         * Only show 2 or higher.
-         *
-         * Pure white:
-         *
-         * RGB   = 255,255,255
-         * Alpha = 255
-         *
-         * #FFFFFFFF
          */
 
         if (repeatCount > 1) {
@@ -202,53 +181,20 @@ public class NoteBlockRenderer {
                         data.z
                 );
 
-        /*
-         * Tiny expansion prevents the
-         * overlay from fighting with
-         * the real block texture.
-         */
-
         double expansion =
                 0.002;
-
-        double minX =
-                pos.getX() -
-                        expansion;
-
-        double minY =
-                pos.getY() -
-                        expansion;
-
-        double minZ =
-                pos.getZ() -
-                        expansion;
-
-        double maxX =
-                pos.getX() +
-                        1 +
-                        expansion;
-
-        double maxY =
-                pos.getY() +
-                        1 +
-                        expansion;
-
-        double maxZ =
-                pos.getZ() +
-                        1 +
-                        expansion;
 
         ShapeRenderer.addChainedFilledBoxVertices(
                 matrices,
                 vertices,
 
-                minX,
-                minY,
-                minZ,
+                pos.getX() - expansion,
+                pos.getY() - expansion,
+                pos.getZ() - expansion,
 
-                maxX,
-                maxY,
-                maxZ,
+                pos.getX() + 1 + expansion,
+                pos.getY() + 1 + expansion,
+                pos.getZ() + 1 + expansion,
 
                 red,
                 green,
@@ -259,8 +205,23 @@ public class NoteBlockRenderer {
 
     /*
      * =========================================================
-     * WHITE REPEAT NUMBER
+     * REPEAT NUMBER
      * =========================================================
+     *
+     * Example:
+     *
+     * 6,6,6,6,4
+     *
+     * First click:
+     *      4
+     *
+     * Then:
+     *      3
+     *
+     * Then:
+     *      2
+     *
+     * Final #6 has no number.
      */
 
     private static void renderRepeatNumber(
@@ -298,47 +259,35 @@ public class NoteBlockRenderer {
                 context.camera();
 
         /*
-         * Center of the note block.
+         * Put the number ABOVE the block.
          *
-         * Number sits slightly above
-         * the center so it is easy to see.
+         * Previously it was inside the block,
+         * so Minecraft's depth rendering
+         * could hide it completely.
          */
 
         double x =
                 data.x + 0.5;
 
         double y =
-                data.y + 0.75;
+                data.y + 1.20;
 
         double z =
                 data.z + 0.5;
 
         String text =
-                String.valueOf(
-                        repeatCount
-                );
+                String.valueOf(repeatCount);
 
         matrices.pushPose();
 
-        /*
-         * Move to block position relative
-         * to camera.
-         */
-
         matrices.translate(
-                x -
-                        camera.getPosition().x,
-
-                y -
-                        camera.getPosition().y,
-
-                z -
-                        camera.getPosition().z
+                x - camera.getPosition().x,
+                y - camera.getPosition().y,
+                z - camera.getPosition().z
         );
 
         /*
-         * Make the number always face
-         * the player's camera.
+         * Always face the player.
          */
 
         matrices.mulPose(
@@ -346,15 +295,12 @@ public class NoteBlockRenderer {
         );
 
         /*
-         * Scale Minecraft font down so
-         * it fits nicely on the block.
-         *
-         * Negative X/Y are intentional
-         * for world-space text.
+         * Make it large enough
+         * to clearly read.
          */
 
         float scale =
-                0.035F;
+                0.045F;
 
         matrices.scale(
                 -scale,
@@ -362,21 +308,16 @@ public class NoteBlockRenderer {
                 scale
         );
 
-        /*
-         * Center the number.
-         */
-
         float textX =
-                -font.width(text) /
-                        2.0F;
+                -font.width(text) / 2.0F;
+
+        float textY =
+                -font.lineHeight / 2.0F;
 
         /*
-         * PURE WHITE.
+         * PURE WHITE
          *
-         * FF = full alpha
-         * FF = red
-         * FF = green
-         * FF = blue
+         * Full opacity.
          */
 
         int pureWhite =
@@ -385,7 +326,7 @@ public class NoteBlockRenderer {
         font.drawInBatch(
                 text,
                 textX,
-                0.0F,
+                textY,
                 pureWhite,
 
                 false,
@@ -396,7 +337,13 @@ public class NoteBlockRenderer {
 
                 consumers,
 
-                Font.DisplayMode.NORMAL,
+                /*
+                 * Important:
+                 *
+                 * SEE_THROUGH prevents the
+                 * block from hiding the number.
+                 */
+                Font.DisplayMode.SEE_THROUGH,
 
                 0,
 
