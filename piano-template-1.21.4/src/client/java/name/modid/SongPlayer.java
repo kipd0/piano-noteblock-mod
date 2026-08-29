@@ -5,11 +5,8 @@ import net.minecraft.client.Minecraft;
 public class SongPlayer {
 
     private Song song;
-
     private int currentIndex;
-
     private boolean playing;
-
     private int highlightedNote = -1;
 
     public void play(Song song) {
@@ -17,7 +14,6 @@ public class SongPlayer {
         if (song == null ||
                 song.notes == null ||
                 song.notes.isEmpty()) {
-
             return;
         }
 
@@ -26,30 +22,28 @@ public class SongPlayer {
         this.playing = true;
 
         this.highlightedNote =
-                song.notes.get(0).noteBlock;
+                song.notes
+                        .get(0)
+                        .noteBlock;
     }
 
     public void stop() {
 
         playing = false;
         highlightedNote = -1;
-
         song = null;
         currentIndex = 0;
     }
 
     public boolean isPlaying() {
-
         return playing;
     }
 
     public int getHighlightedNote() {
-
         return highlightedNote;
     }
 
     public int getCurrentIndex() {
-
         return currentIndex;
     }
 
@@ -59,7 +53,6 @@ public class SongPlayer {
                 song == null ||
                 currentIndex < 0 ||
                 currentIndex >= song.notes.size()) {
-
             return -1;
         }
 
@@ -72,7 +65,6 @@ public class SongPlayer {
 
         if (!playing ||
                 song == null) {
-
             return -1;
         }
 
@@ -92,7 +84,6 @@ public class SongPlayer {
 
         if (!playing ||
                 song == null) {
-
             return -1;
         }
 
@@ -108,29 +99,102 @@ public class SongPlayer {
                 .noteBlock;
     }
 
+    /*
+     * =========================================================
+     * REPEAT COUNT
+     * =========================================================
+     *
+     * Counts how many consecutive clicks remain
+     * on the current block.
+     *
+     * Example song:
+     *
+     * 6,6,6,6,4
+     *
+     * First #6  -> 4
+     * Second #6 -> 3
+     * Third #6  -> 2
+     * Fourth #6 -> 1
+     *
+     * The renderer hides the number when this
+     * returns 1.
+     */
+
+    public int getRemainingRepeatCount() {
+
+        if (!playing ||
+                song == null ||
+                currentIndex < 0 ||
+                currentIndex >= song.notes.size()) {
+            return 0;
+        }
+
+        int currentNote =
+                song.notes
+                        .get(currentIndex)
+                        .noteBlock;
+
+        int count = 0;
+
+        for (int i = currentIndex;
+             i < song.notes.size();
+             i++) {
+
+            if (song.notes
+                    .get(i)
+                    .noteBlock != currentNote) {
+                break;
+            }
+
+            count++;
+        }
+
+        return count;
+    }
+
+    /*
+     * =========================================================
+     * CORRECT CLICK
+     * =========================================================
+     */
+
     public void clickNote(int noteNumber) {
 
         if (!playing ||
                 song == null ||
                 currentIndex < 0 ||
                 currentIndex >= song.notes.size()) {
-
             return;
         }
+
+        /*
+         * Wrong block.
+         *
+         * Do absolutely nothing.
+         */
 
         if (noteNumber != highlightedNote) {
-
             return;
         }
+
+        /*
+         * Correct block.
+         */
 
         currentIndex++;
 
+        /*
+         * Song finished.
+         */
+
         if (currentIndex >= song.notes.size()) {
-
             stop();
-
             return;
         }
+
+        /*
+         * Advance highlight.
+         */
 
         highlightedNote =
                 song.notes
@@ -144,7 +208,6 @@ public class SongPlayer {
                 song == null ||
                 currentIndex < 0 ||
                 currentIndex >= song.notes.size()) {
-
             return false;
         }
 
@@ -162,7 +225,6 @@ public class SongPlayer {
             if (song.notes
                     .get(i)
                     .noteBlock != currentNote) {
-
                 break;
             }
 
@@ -173,7 +235,6 @@ public class SongPlayer {
     }
 
     public void tick(Minecraft client) {
-
         // No automatic timing.
     }
 }
