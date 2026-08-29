@@ -16,7 +16,6 @@ public class SongScreen extends Screen {
     private EditBox importBox;
     private EditBox entryBox;
     private EditBox noteBox;
-    private EditBox timeBox;
 
     private String message = "";
 
@@ -108,9 +107,6 @@ public class SongScreen extends Screen {
                         Component.literal("Import Song")
                 );
 
-        /*
-         * Allow long songs.
-         */
         importBox.setMaxLength(10000);
 
         addRenderableWidget(importBox);
@@ -138,7 +134,7 @@ public class SongScreen extends Screen {
                         font,
                         centerX - 100,
                         185,
-                        55,
+                        80,
                         20,
                         Component.literal("Entry")
                 );
@@ -146,30 +142,18 @@ public class SongScreen extends Screen {
         noteBox =
                 new EditBox(
                         font,
-                        centerX - 30,
+                        centerX + 20,
                         185,
-                        55,
+                        80,
                         20,
                         Component.literal("Note")
                 );
 
-        timeBox =
-                new EditBox(
-                        font,
-                        centerX + 40,
-                        185,
-                        60,
-                        20,
-                        Component.literal("Time")
-                );
-
         entryBox.setValue("1");
         noteBox.setValue("1");
-        timeBox.setValue("0.5");
 
         addRenderableWidget(entryBox);
         addRenderableWidget(noteBox);
-        addRenderableWidget(timeBox);
 
         addRenderableWidget(
                 Button.builder(
@@ -407,11 +391,9 @@ public class SongScreen extends Screen {
      * IMPORT SONG
      * =========================================================
      *
-     * Format:
+     * New format:
      *
-     * 4:0.261,6:0.453,7:0.261
-     *
-     * note:seconds
+     * 4,6,7,9,6,6,4
      */
 
     private void importSong() {
@@ -448,37 +430,19 @@ public class SongScreen extends Screen {
                 continue;
             }
 
-            String[] parts =
-                    entry.split(":");
-
-            if (parts.length != 2) {
-
-                message =
-                        "Bad import at entry " +
-                                (i + 1);
-
-                return;
-            }
-
             int note;
-            double seconds;
 
             try {
 
                 note =
                         Integer.parseInt(
-                                parts[0].trim()
-                        );
-
-                seconds =
-                        Double.parseDouble(
-                                parts[1].trim()
+                                entry
                         );
 
             } catch (NumberFormatException e) {
 
                 message =
-                        "Bad number at entry " +
+                        "Bad note at entry " +
                                 (i + 1);
 
                 return;
@@ -494,25 +458,8 @@ public class SongScreen extends Screen {
                 return;
             }
 
-            if (seconds <= 0) {
-
-                message =
-                        "Time must be > 0 at entry " +
-                                (i + 1);
-
-                return;
-            }
-
-            long milliseconds =
-                    Math.round(
-                            seconds * 1000.0
-                    );
-
             importedNotes.add(
-                    new SongNote(
-                            note,
-                            milliseconds
-                    )
+                    new SongNote(note)
             );
         }
 
@@ -523,11 +470,6 @@ public class SongScreen extends Screen {
 
             return;
         }
-
-        /*
-         * Only replace the current song AFTER
-         * the entire import has been validated.
-         */
 
         Song currentSong =
                 PianoClient.CONFIG
@@ -994,21 +936,11 @@ public class SongScreen extends Screen {
             return;
         }
 
-        Long milliseconds =
-                readTime();
-
-        if (milliseconds == null) {
-            return;
-        }
-
         PianoClient.CONFIG
                 .getCurrentSong()
                 .notes
                 .add(
-                        new SongNote(
-                                note,
-                                milliseconds
-                        )
+                        new SongNote(note)
                 );
 
         PianoClient.CONFIG.save();
@@ -1027,7 +959,9 @@ public class SongScreen extends Screen {
 
         message =
                 "Added entry " +
-                        newEntry;
+                        newEntry +
+                        ": #" +
+                        note;
     }
 
     /*
@@ -1054,13 +988,6 @@ public class SongScreen extends Screen {
         noteBox.setValue(
                 String.valueOf(
                         note.noteBlock
-                )
-        );
-
-        timeBox.setValue(
-                String.valueOf(
-                        note.durationMs /
-                                1000.0
                 )
         );
 
@@ -1091,13 +1018,6 @@ public class SongScreen extends Screen {
             return;
         }
 
-        Long milliseconds =
-                readTime();
-
-        if (milliseconds == null) {
-            return;
-        }
-
         SongNote existing =
                 PianoClient.CONFIG
                         .getCurrentSong()
@@ -1107,14 +1027,13 @@ public class SongScreen extends Screen {
         existing.noteBlock =
                 note;
 
-        existing.durationMs =
-                milliseconds;
-
         PianoClient.CONFIG.save();
 
         message =
                 "Updated entry " +
-                        (index + 1);
+                        (index + 1) +
+                        " to #" +
+                        note;
     }
 
     /*
@@ -1258,39 +1177,6 @@ public class SongScreen extends Screen {
         return note;
     }
 
-    private Long readTime() {
-
-        double seconds;
-
-        try {
-
-            seconds =
-                    Double.parseDouble(
-                            timeBox
-                                    .getValue()
-                    );
-
-        } catch (NumberFormatException e) {
-
-            message =
-                    "Invalid time.";
-
-            return null;
-        }
-
-        if (seconds <= 0) {
-
-            message =
-                    "Time must be greater than 0.";
-
-            return null;
-        }
-
-        return Math.round(
-                seconds * 1000.0
-        );
-    }
-
     /*
      * =========================================================
      * RENDER
@@ -1344,7 +1230,7 @@ public class SongScreen extends Screen {
 
         graphics.drawString(
                 font,
-                "Import: note:seconds,note:seconds,...",
+                "Import: 4,6,7,9,6,6,4",
                 centerX - 100,
                 97,
                 0xAAAAAA
@@ -1361,15 +1247,7 @@ public class SongScreen extends Screen {
         graphics.drawString(
                 font,
                 "Note #",
-                centerX - 30,
-                172,
-                0xAAAAAA
-        );
-
-        graphics.drawString(
-                font,
-                "Seconds",
-                centerX + 40,
+                centerX + 20,
                 172,
                 0xAAAAAA
         );
@@ -1445,8 +1323,11 @@ public class SongScreen extends Screen {
                                 entryBox.getValue()
                         );
 
-                if (selectedEntry == i + 1) {
-                    color = 0xFFFF55;
+                if (selectedEntry ==
+                        i + 1) {
+
+                    color =
+                            0xFFFF55;
                 }
 
             } catch (
@@ -1458,11 +1339,7 @@ public class SongScreen extends Screen {
                     font,
                     (i + 1) +
                             ".  #" +
-                            note.noteBlock +
-                            "    " +
-                            (note.durationMs /
-                                    1000.0) +
-                            "s",
+                            note.noteBlock,
                     centerX - 100,
                     y,
                     color
