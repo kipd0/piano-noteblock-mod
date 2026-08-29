@@ -14,7 +14,19 @@ public class PianoConfig {
 
     private static final Gson GSON =
             new GsonBuilder().setPrettyPrinting().create();
-p
+
+    public Map<Integer, NoteBlockData> noteBlocks = new HashMap<>();
+
+    public Map<String, Song> songs = new HashMap<>();
+
+    public String currentSong = "My Song";
+
+    public double hudX = 0.5;
+    public double hudY = 0.1;
+
+    public static PianoConfig load() {
+
+        Path path = getPath();
 
         try {
 
