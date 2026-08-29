@@ -79,75 +79,73 @@ public class NoteBlockRenderer {
                 );
 
         /*
-         * =====================================
-         * CURRENT + NEXT ARE THE SAME NOTE
-         * =====================================
+         * =====================================================
+         * SAME NOTE TWICE
+         * =====================================================
+         *
+         * Purple = current note is also the next note.
          *
          * Example:
          *
          * 6,6,4
          *
-         * We cannot draw yellow and red on the
-         * same block, so orange means:
-         *
-         * "Click this block now, and it is also
-         * the next note."
+         * #6 will be purple.
          */
 
         if (currentNote == nextNote) {
 
-            renderNoteBox(
+            renderGlowBox(
                     matrices,
                     vertices,
                     currentNote,
 
-                    // ORANGE
-                    1.0F,
-                    0.5F,
-                    0.0F
+                    // PURPLE
+                    0.75F,
+                    0.25F,
+                    1.0F
             );
 
         } else {
 
             /*
-             * =====================================
+             * =================================================
              * CURRENT NOTE
-             * =====================================
+             * =================================================
              *
-             * Yellow = click NOW
+             * Bright cyan.
              */
 
-            renderNoteBox(
+            renderGlowBox(
                     matrices,
                     vertices,
                     currentNote,
 
-                    // YELLOW
-                    1.0F,
-                    1.0F,
-                    0.0F
+                    // CYAN
+                    0.15F,
+                    0.90F,
+                    1.0F
             );
 
             /*
-             * =====================================
+             * =================================================
              * NEXT NOTE
-             * =====================================
+             * =================================================
              *
-             * Red = click NEXT
+             * Hot pink.
              */
 
             if (nextNote >= 1 &&
                     nextNote <= 24) {
 
-                renderNoteBox(
+                renderGlowBox(
                         matrices,
                         vertices,
                         nextNote,
 
-                        // RED
+                        // PINK
                         1.0F,
-                        0.0F,
-                        0.0F
+                        0.20F,
+                        0.65F
                 );
             }
         }
@@ -157,11 +155,11 @@ public class NoteBlockRenderer {
 
     /*
      * =========================================================
-     * DRAW ONE NOTE BLOCK
+     * OSU-STYLE GLOW BOX
      * =========================================================
      */
 
-    private static void renderNoteBox(
+    private static void renderGlowBox(
             PoseStack matrices,
             VertexConsumer vertices,
             int noteNumber,
@@ -195,6 +193,38 @@ public class NoteBlockRenderer {
                         pos.getZ() + 1
                 );
 
+        /*
+         * Outer glow
+         */
+
+        ShapeRenderer.renderLineBox(
+                matrices,
+                vertices,
+                box.inflate(0.10),
+                red,
+                green,
+                blue,
+                0.25F
+        );
+
+        /*
+         * Middle glow
+         */
+
+        ShapeRenderer.renderLineBox(
+                matrices,
+                vertices,
+                box.inflate(0.075),
+                red,
+                green,
+                blue,
+                0.50F
+        );
+
+        /*
+         * Strong colored outline
+         */
+
         ShapeRenderer.renderLineBox(
                 matrices,
                 vertices,
@@ -203,6 +233,23 @@ public class NoteBlockRenderer {
                 green,
                 blue,
                 1.0F
+        );
+
+        /*
+         * Small bright inner outline.
+         *
+         * This gives the target a brighter,
+         * rhythm-game-like edge.
+         */
+
+        ShapeRenderer.renderLineBox(
+                matrices,
+                vertices,
+                box.inflate(0.03),
+                1.0F,
+                1.0F,
+                1.0F,
+                0.85F
         );
     }
 }
