@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.core.BlockPos;
@@ -27,19 +26,16 @@ public class NoteBlockRenderer {
             return;
         }
 
-        int number =
+        int currentNote =
                 PianoClient.PLAYER
-                        .getHighlightedNote();
+                        .getCurrentNote();
 
-        if (number < 1 || number > 24) {
-            return;
-        }
+        int nextNote =
+                PianoClient.PLAYER
+                        .getNextNote();
 
-        NoteBlockData data =
-                PianoClient.CONFIG
-                        .getNoteBlock(number);
-
-        if (data == null) {
+        if (currentNote < 1 ||
+                currentNote > 24) {
             return;
         }
 
@@ -57,13 +53,6 @@ public class NoteBlockRenderer {
             return;
         }
 
-        Minecraft client =
-                Minecraft.getInstance();
-
-        if (client.gameRenderer == null) {
-            return;
-        }
-
         var camera =
                 context.camera();
 
@@ -75,6 +64,119 @@ public class NoteBlockRenderer {
 
         double camZ =
                 camera.getPosition().z;
+
+        matrices.pushPose();
+
+        matrices.translate(
+                -camX,
+                -camY,
+                -camZ
+        );
+
+        VertexConsumer vertices =
+                consumers.getBuffer(
+                        RenderType.lines()
+                );
+
+        /*
+         * =====================================
+         * CURRENT + NEXT ARE THE SAME NOTE
+         * =====================================
+         *
+         * Example:
+         *
+         * 6,6,4
+         *
+         * We cannot draw yellow and red on the
+         * same block, so orange means:
+         *
+         * "Click this block now, and it is also
+         * the next note."
+         */
+
+        if (currentNote == nextNote) {
+
+            renderNoteBox(
+                    matrices,
+                    vertices,
+                    currentNote,
+
+                    // ORANGE
+                    1.0F,
+                    0.5F,
+                    0.0F
+            );
+
+        } else {
+
+            /*
+             * =====================================
+             * CURRENT NOTE
+             * =====================================
+             *
+             * Yellow = click NOW
+             */
+
+            renderNoteBox(
+                    matrices,
+                    vertices,
+                    currentNote,
+
+                    // YELLOW
+                    1.0F,
+                    1.0F,
+                    0.0F
+            );
+
+            /*
+             * =====================================
+             * NEXT NOTE
+             * =====================================
+             *
+             * Red = click NEXT
+             */
+
+            if (nextNote >= 1 &&
+                    nextNote <= 24) {
+
+                renderNoteBox(
+                        matrices,
+                        vertices,
+                        nextNote,
+
+                        // RED
+                        1.0F,
+                        0.0F,
+                        0.0F
+                );
+            }
+        }
+
+        matrices.popPose();
+    }
+
+    /*
+     * =========================================================
+     * DRAW ONE NOTE BLOCK
+     * =========================================================
+     */
+
+    private static void renderNoteBox(
+            PoseStack matrices,
+            VertexConsumer vertices,
+            int noteNumber,
+            float red,
+            float green,
+            float blue
+    ) {
+
+        NoteBlockData data =
+                PianoClient.CONFIG
+                        .getNoteBlock(noteNumber);
+
+        if (data == null) {
+            return;
+        }
 
         BlockPos pos =
                 new BlockPos(
@@ -93,59 +195,6 @@ public class NoteBlockRenderer {
                         pos.getZ() + 1
                 );
 
-        matrices.pushPose();
-
-        matrices.translate(
-                -camX,
-                -camY,
-                -camZ
-        );
-
-        VertexConsumer vertices =
-                consumers.getBuffer(
-                        RenderType.lines()
-                );
-
-        /*
-         * Consecutive copies of the same note
-         * alternate between yellow and red.
-         *
-         * Example:
-         *
-         * 2 = yellow
-         * 2 = red
-         * 2 = yellow
-         * 2 = red
-         *
-         * Changing to another note resets it:
-         *
-         * 4 = yellow
-         * 4 = red
-         */
-
-        boolean alternate =
-                PianoClient.PLAYER
-                        .useAlternateColor();
-
-        float red;
-        float green;
-        float blue;
-
-        if (alternate) {
-
-            // RED
-            red = 1.0F;
-            green = 0.0F;
-            blue = 0.0F;
-
-        } else {
-
-            // YELLOW
-            red = 1.0F;
-            green = 1.0F;
-            blue = 0.0F;
-        }
-
         ShapeRenderer.renderLineBox(
                 matrices,
                 vertices,
@@ -155,7 +204,5 @@ public class NoteBlockRenderer {
                 blue,
                 1.0F
         );
-
-        matrices.popPose();
     }
 }
