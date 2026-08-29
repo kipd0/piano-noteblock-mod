@@ -21,9 +21,6 @@ public class PianoConfig {
 
     public String currentSong = "My Song";
 
-    public double hudX = 0.5;
-    public double hudY = 0.1;
-
     public static PianoConfig load() {
 
         Path path = getPath();
