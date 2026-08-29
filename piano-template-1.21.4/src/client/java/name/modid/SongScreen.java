@@ -1281,14 +1281,6 @@ public class SongScreen extends Screen {
 
         graphics.drawCenteredString(
                 font,
-                "HUD Position",
-                centerX,
-                352,
-                0xAAAAAA
-        );
-
-        graphics.drawCenteredString(
-                font,
                 "Current: " +
                         PianoClient.CONFIG
                                 .currentSong,
