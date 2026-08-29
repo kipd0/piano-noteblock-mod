@@ -73,6 +73,5 @@ public class PianoClient implements ClientModInitializer {
         });
 
         NoteBlockRenderer.register();
-        PianoHudRenderer.register();
     }
 }
