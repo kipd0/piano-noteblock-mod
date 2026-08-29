@@ -80,7 +80,9 @@ public class NoteBlockRenderer {
                 );
 
         /*
-         * CURRENT = GREEN
+         * CURRENT NOTE
+         *
+         * Green.
          */
         renderFilledBlock(
                 matrices,
@@ -90,14 +92,17 @@ public class NoteBlockRenderer {
                 0.25F,
                 1.00F,
                 0.35F,
+
                 0.45F
         );
 
         /*
-         * NEXT = BLUE
+         * NEXT NOTE
+         *
+         * Blue.
          *
          * Don't show blue when the next
-         * click is the same block.
+         * note is the same block.
          */
         if (nextNote >= 1 &&
                 nextNote <= 24 &&
@@ -111,6 +116,7 @@ public class NoteBlockRenderer {
                     0.20F,
                     0.55F,
                     1.00F,
+
                     0.30F
             );
         }
@@ -118,9 +124,15 @@ public class NoteBlockRenderer {
         matrices.popPose();
 
         /*
-         * Repeat number.
+         * =====================================================
+         * REPEAT NUMBER
+         * =====================================================
          *
-         * Only show 2 or higher.
+         * Example:
+         *
+         * 6,6,6,6,4
+         *
+         * 4 -> 3 -> 2 -> no number
          */
         if (repeatCount > 1) {
 
@@ -131,6 +143,12 @@ public class NoteBlockRenderer {
             );
         }
     }
+
+    /*
+     * =========================================================
+     * FILLED BLOCK
+     * =========================================================
+     */
 
     private static void renderFilledBlock(
             PoseStack matrices,
@@ -157,7 +175,12 @@ public class NoteBlockRenderer {
                         data.z
                 );
 
-        double expansion = 0.002;
+        /*
+         * Tiny expansion prevents the colored
+         * overlay from fighting with the block.
+         */
+        double expansion =
+                0.002;
 
         ShapeRenderer.addChainedFilledBoxVertices(
                 matrices,
@@ -180,8 +203,12 @@ public class NoteBlockRenderer {
 
     /*
      * =========================================================
-     * NUMBER ON BLOCK FACE
+     * REPEAT NUMBER
      * =========================================================
+     *
+     * Draws the white number directly in
+     * front of the block face closest to
+     * the player.
      */
 
     private static void renderNumber(
@@ -215,6 +242,9 @@ public class NoteBlockRenderer {
         var camera =
                 context.camera();
 
+        /*
+         * Center of the block.
+         */
         double blockX =
                 data.x + 0.5;
 
@@ -224,6 +254,10 @@ public class NoteBlockRenderer {
         double blockZ =
                 data.z + 0.5;
 
+        /*
+         * Find where the player is relative
+         * to the block.
+         */
         double dx =
                 camera.getPosition().x -
                         blockX;
@@ -233,36 +267,51 @@ public class NoteBlockRenderer {
                         blockZ;
 
         double x;
-        double y = blockY;
+        double y =
+                blockY;
         double z;
 
         float rotationY;
 
         /*
-         * Find the block face closest
-         * to the player.
+         * =====================================================
+         * PICK THE FACE FACING THE PLAYER
+         * =====================================================
          */
-        if (Math.abs(dx) > Math.abs(dz)) {
+
+        if (Math.abs(dx) >
+                Math.abs(dz)) {
 
             if (dx > 0) {
 
                 /*
-                 * EAST
+                 * EAST FACE
+                 *
+                 * Number is pushed 0.03 blocks
+                 * away from the surface.
                  */
-                x = data.x + 1.006;
-                z = data.z + 0.5;
+                x =
+                        data.x + 1.03;
 
-                rotationY = 90.0F;
+                z =
+                        data.z + 0.5;
+
+                rotationY =
+                        90.0F;
 
             } else {
 
                 /*
-                 * WEST
+                 * WEST FACE
                  */
-                x = data.x - 0.006;
-                z = data.z + 0.5;
+                x =
+                        data.x - 0.03;
 
-                rotationY = -90.0F;
+                z =
+                        data.z + 0.5;
+
+                rotationY =
+                        -90.0F;
             }
 
         } else {
@@ -270,33 +319,48 @@ public class NoteBlockRenderer {
             if (dz > 0) {
 
                 /*
-                 * SOUTH
+                 * SOUTH FACE
                  */
-                x = data.x + 0.5;
-                z = data.z + 1.006;
+                x =
+                        data.x + 0.5;
 
-                rotationY = 180.0F;
+                z =
+                        data.z + 1.03;
+
+                rotationY =
+                        180.0F;
 
             } else {
 
                 /*
-                 * NORTH
+                 * NORTH FACE
                  */
-                x = data.x + 0.5;
-                z = data.z - 0.006;
+                x =
+                        data.x + 0.5;
 
-                rotationY = 0.0F;
+                z =
+                        data.z - 0.03;
+
+                rotationY =
+                        0.0F;
             }
         }
 
         matrices.pushPose();
 
+        /*
+         * Move the number to the selected face.
+         */
         matrices.translate(
                 x - camera.getPosition().x,
                 y - camera.getPosition().y,
                 z - camera.getPosition().z
         );
 
+        /*
+         * Make the number lie flat against
+         * that face.
+         */
         matrices.mulPose(
                 Axis.YP.rotationDegrees(
                         rotationY
@@ -304,13 +368,16 @@ public class NoteBlockRenderer {
         );
 
         /*
-         * IMPORTANT FIX:
-         *
-         * X is negative to un-mirror the number.
-         * Y stays positive so it remains upright.
+         * Number size.
          */
-        float scale = 0.22F;
+        float scale =
+                0.22F;
 
+        /*
+         * Negative X fixes the mirrored digits.
+         *
+         * Positive Y keeps them upright.
+         */
         matrices.scale(
                 -scale,
                 scale,
@@ -325,7 +392,11 @@ public class NoteBlockRenderer {
         String text =
                 String.valueOf(number);
 
-        float digitSpacing = 1.30F;
+        /*
+         * Supports numbers bigger than 9 too.
+         */
+        float digitSpacing =
+                1.30F;
 
         float totalWidth =
                 text.length() *
@@ -336,9 +407,11 @@ public class NoteBlockRenderer {
                         (digitSpacing / 2.0F);
 
         /*
-         * Vertically center number.
+         * Vertically center the digits
+         * on the block.
          */
-        float startY = -0.9F;
+        float startY =
+                -0.9F;
 
         for (int i = 0;
              i < text.length();
@@ -372,8 +445,20 @@ public class NoteBlockRenderer {
 
     /*
      * =========================================================
-     * SEVEN SEGMENT DIGIT
+     * SEVEN SEGMENT DIGITS
      * =========================================================
+     *
+     *       A
+     *     -----
+     *    |     |
+     *  F |     | B
+     *    |  G  |
+     *     -----
+     *    |     |
+     *  E |     | C
+     *    |     |
+     *     -----
+     *       D
      */
 
     private static void drawDigit(
@@ -474,6 +559,9 @@ public class NoteBlockRenderer {
             }
         }
 
+        /*
+         * TOP
+         */
         if (a) {
             horizontalSegment(
                     matrices,
@@ -483,6 +571,9 @@ public class NoteBlockRenderer {
             );
         }
 
+        /*
+         * MIDDLE
+         */
         if (g) {
             horizontalSegment(
                     matrices,
@@ -492,6 +583,9 @@ public class NoteBlockRenderer {
             );
         }
 
+        /*
+         * BOTTOM
+         */
         if (d) {
             horizontalSegment(
                     matrices,
@@ -501,6 +595,9 @@ public class NoteBlockRenderer {
             );
         }
 
+        /*
+         * TOP LEFT
+         */
         if (f) {
             verticalSegment(
                     matrices,
@@ -510,6 +607,9 @@ public class NoteBlockRenderer {
             );
         }
 
+        /*
+         * TOP RIGHT
+         */
         if (b) {
             verticalSegment(
                     matrices,
@@ -519,6 +619,9 @@ public class NoteBlockRenderer {
             );
         }
 
+        /*
+         * BOTTOM LEFT
+         */
         if (e) {
             verticalSegment(
                     matrices,
@@ -528,6 +631,9 @@ public class NoteBlockRenderer {
             );
         }
 
+        /*
+         * BOTTOM RIGHT
+         */
         if (c) {
             verticalSegment(
                     matrices,
@@ -538,6 +644,12 @@ public class NoteBlockRenderer {
         }
     }
 
+    /*
+     * =========================================================
+     * HORIZONTAL NUMBER SEGMENT
+     * =========================================================
+     */
+
     private static void horizontalSegment(
             PoseStack matrices,
             VertexConsumer vertices,
@@ -545,9 +657,20 @@ public class NoteBlockRenderer {
             float y
     ) {
 
-        double halfWidth = 0.48;
-        double halfHeight = 0.10;
-        double depth = 0.025;
+        double halfWidth =
+                0.48;
+
+        double halfHeight =
+                0.10;
+
+        /*
+         * Very thin.
+         *
+         * This prevents the number from
+         * clipping into the note block.
+         */
+        double depth =
+                0.005;
 
         ShapeRenderer.addChainedFilledBoxVertices(
                 matrices,
@@ -563,6 +686,7 @@ public class NoteBlockRenderer {
 
                 /*
                  * PURE WHITE
+                 * FULL OPACITY
                  */
                 1.0F,
                 1.0F,
@@ -571,6 +695,12 @@ public class NoteBlockRenderer {
         );
     }
 
+    /*
+     * =========================================================
+     * VERTICAL NUMBER SEGMENT
+     * =========================================================
+     */
+
     private static void verticalSegment(
             PoseStack matrices,
             VertexConsumer vertices,
@@ -578,9 +708,18 @@ public class NoteBlockRenderer {
             float y
     ) {
 
-        double halfWidth = 0.10;
-        double halfHeight = 0.40;
-        double depth = 0.025;
+        double halfWidth =
+                0.10;
+
+        double halfHeight =
+                0.40;
+
+        /*
+         * Same thin depth as the
+         * horizontal pieces.
+         */
+        double depth =
+                0.005;
 
         ShapeRenderer.addChainedFilledBoxVertices(
                 matrices,
@@ -596,6 +735,7 @@ public class NoteBlockRenderer {
 
                 /*
                  * PURE WHITE
+                 * FULL OPACITY
                  */
                 1.0F,
                 1.0F,
