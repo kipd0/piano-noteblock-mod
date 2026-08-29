@@ -1,6 +1,7 @@
 package name.modid;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -268,6 +269,98 @@ public class SongScreen extends Screen {
                         200,
                         20
                 ).build()
+        );
+
+        /*
+         * =========================
+         * HUD POSITION SLIDERS
+         * =========================
+         */
+
+        addRenderableWidget(
+                new AbstractSliderButton(
+                        centerX - 100,
+                        365,
+                        95,
+                        20,
+                        Component.literal(
+                                "HUD X: " +
+                                        (int) (
+                                                PianoClient.CONFIG.hudX *
+                                                        100
+                                        ) +
+                                        "%"
+                        ),
+                        PianoClient.CONFIG.hudX
+                ) {
+
+                    @Override
+                    protected void updateMessage() {
+
+                        setMessage(
+                                Component.literal(
+                                        "HUD X: " +
+                                                (int) (
+                                                        value *
+                                                                100
+                                                ) +
+                                                "%"
+                                )
+                        );
+                    }
+
+                    @Override
+                    protected void applyValue() {
+
+                        PianoClient.CONFIG.hudX =
+                                value;
+
+                        PianoClient.CONFIG.save();
+                    }
+                }
+        );
+
+        addRenderableWidget(
+                new AbstractSliderButton(
+                        centerX + 5,
+                        365,
+                        95,
+                        20,
+                        Component.literal(
+                                "HUD Y: " +
+                                        (int) (
+                                                PianoClient.CONFIG.hudY *
+                                                        100
+                                        ) +
+                                        "%"
+                        ),
+                        PianoClient.CONFIG.hudY
+                ) {
+
+                    @Override
+                    protected void updateMessage() {
+
+                        setMessage(
+                                Component.literal(
+                                        "HUD Y: " +
+                                                (int) (
+                                                        value *
+                                                                100
+                                                ) +
+                                                "%"
+                                )
+                        );
+                    }
+
+                    @Override
+                    protected void applyValue() {
+
+                        PianoClient.CONFIG.hudY =
+                                value;
+
+                        PianoClient.CONFIG.save();
+                    }
+                }
         );
 
         /*
@@ -1281,11 +1374,19 @@ public class SongScreen extends Screen {
 
         graphics.drawCenteredString(
                 font,
+                "HUD Position",
+                centerX,
+                352,
+                0xAAAAAA
+        );
+
+        graphics.drawCenteredString(
+                font,
                 "Current: " +
                         PianoClient.CONFIG
                                 .currentSong,
                 centerX,
-                365,
+                395,
                 0xFFFF55
         );
 
@@ -1295,7 +1396,7 @@ public class SongScreen extends Screen {
                     font,
                     message,
                     centerX,
-                    380,
+                    410,
                     0xFFFFFF
             );
         }
@@ -1304,7 +1405,7 @@ public class SongScreen extends Screen {
                 PianoClient.CONFIG
                         .getCurrentSong();
 
-        int y = 400;
+        int y = 430;
 
         for (int i = 0;
              i < song.notes.size();
