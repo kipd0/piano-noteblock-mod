@@ -4,12 +4,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.core.BlockPos;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 public class NoteBlockRenderer {
 
@@ -60,34 +59,43 @@ public class NoteBlockRenderer {
         var camera =
                 context.camera();
 
+        double camX =
+                camera.getPosition().x;
+
+        double camY =
+                camera.getPosition().y;
+
+        double camZ =
+                camera.getPosition().z;
+
         /*
          * =====================================================
-         * FILLED BLOCK COLORS
+         * BLOCK OVERLAYS
          * =====================================================
          */
 
         matrices.pushPose();
 
         matrices.translate(
-                -camera.getPosition().x,
-                -camera.getPosition().y,
-                -camera.getPosition().z
+                -camX,
+                -camY,
+                -camZ
         );
 
-        VertexConsumer vertices =
+        VertexConsumer blockVertices =
                 consumers.getBuffer(
                         RenderType.debugFilledBox()
                 );
 
         /*
-         * CURRENT
+         * CURRENT NOTE
          *
          * Green.
          */
 
         renderFilledBlock(
                 matrices,
-                vertices,
+                blockVertices,
                 currentNote,
 
                 0.25F,
@@ -98,12 +106,12 @@ public class NoteBlockRenderer {
         );
 
         /*
-         * NEXT
+         * NEXT NOTE
          *
          * Blue.
          *
-         * If next is the same note,
-         * don't put blue over it.
+         * If next is the SAME block,
+         * don't draw the blue overlay.
          */
 
         if (nextNote >= 1 &&
@@ -112,7 +120,7 @@ public class NoteBlockRenderer {
 
             renderFilledBlock(
                     matrices,
-                    vertices,
+                    blockVertices,
                     nextNote,
 
                     0.20F,
@@ -129,11 +137,17 @@ public class NoteBlockRenderer {
          * =====================================================
          * REPEAT NUMBER
          * =====================================================
+         *
+         * This does NOT use Minecraft's font renderer.
+         *
+         * It draws the number from small white rectangles,
+         * so it uses the same world-rendering method that
+         * already works for your colored blocks.
          */
 
         if (repeatCount > 1) {
 
-            renderRepeatNumber(
+            renderNumber(
                     context,
                     currentNote,
                     repeatCount
@@ -196,14 +210,14 @@ public class NoteBlockRenderer {
 
     /*
      * =========================================================
-     * REPEAT NUMBER
+     * NUMBER RENDERING
      * =========================================================
      */
 
-    private static void renderRepeatNumber(
+    private static void renderNumber(
             WorldRenderContext context,
             int noteNumber,
-            int repeatCount
+            int number
     ) {
 
         NoteBlockData data =
@@ -214,12 +228,6 @@ public class NoteBlockRenderer {
             return;
         }
 
-        Minecraft client =
-                Minecraft.getInstance();
-
-        Font font =
-                client.font;
-
         PoseStack matrices =
                 context.matrixStack();
 
@@ -227,44 +235,31 @@ public class NoteBlockRenderer {
             return;
         }
 
+        var consumers =
+                context.consumers();
+
+        if (consumers == null) {
+            return;
+        }
+
         var camera =
                 context.camera();
 
         /*
-         * IMPORTANT:
-         *
-         * Use Minecraft's main text buffer instead
-         * of the WorldRenderContext buffer.
-         */
-
-        MultiBufferSource.BufferSource textBuffer =
-                client.renderBuffers()
-                        .bufferSource();
-
-        String text =
-                String.valueOf(repeatCount);
-
-        /*
-         * Position:
-         *
-         * Centered horizontally over the block,
-         * slightly above the top face.
+         * We draw the number floating just
+         * above the block.
          */
 
         double x =
                 data.x + 0.5;
 
         double y =
-                data.y + 1.35;
+                data.y + 1.15;
 
         double z =
                 data.z + 0.5;
 
         matrices.pushPose();
-
-        /*
-         * Move from camera to block.
-         */
 
         matrices.translate(
                 x - camera.getPosition().x,
@@ -273,78 +268,362 @@ public class NoteBlockRenderer {
         );
 
         /*
-         * Billboard.
-         *
-         * Always faces the player's screen.
+         * Make the digital number always
+         * face the camera.
          */
 
-        matrices.mulPose(
-                camera.rotation()
-        );
+        Quaternionf rotation =
+                new Quaternionf(
+                        camera.rotation()
+                );
+
+        matrices.mulPose(rotation);
 
         /*
-         * BIGGER than before.
-         *
-         * This should be very obvious while
-         * we're testing it.
+         * Width/height of one digit.
          */
 
         float scale =
-                0.060F;
+                0.18F;
 
         matrices.scale(
-                -scale,
-                -scale,
+                scale,
+                scale,
                 scale
         );
 
-        float textX =
-                -font.width(text) /
-                        2.0F;
-
-        float textY =
-                -font.lineHeight /
-                        2.0F;
-
         /*
-         * Pure white.
-         *
-         * FF alpha
-         * FF red
-         * FF green
-         * FF blue
+         * Flip it so it reads correctly
+         * toward the player.
          */
 
-        int pureWhite =
-                0xFFFFFFFF;
-
-        /*
-         * Draw a SEE_THROUGH copy.
-         *
-         * This means terrain cannot hide it.
-         */
-
-        font.drawInBatch(
-                text,
-                textX,
-                textY,
-                pureWhite,
-                false,
-                matrices.last().pose(),
-                textBuffer,
-                Font.DisplayMode.SEE_THROUGH,
-                0,
-                15728880
+        matrices.scale(
+                -1.0F,
+                -1.0F,
+                1.0F
         );
 
-        /*
-         * Explicitly flush the text buffer.
-         *
-         * This is the important change.
-         */
+        VertexConsumer vertices =
+                consumers.getBuffer(
+                        RenderType.debugFilledBox()
+                );
 
-        textBuffer.endBatch();
+        String text =
+                String.valueOf(number);
+
+        float digitSpacing =
+                1.30F;
+
+        float totalWidth =
+                text.length() *
+                        digitSpacing;
+
+        float startX =
+                -(totalWidth / 2.0F) +
+                        (digitSpacing / 2.0F);
+
+        for (int i = 0;
+             i < text.length();
+             i++) {
+
+            int digit =
+                    Character.digit(
+                            text.charAt(i),
+                            10
+                    );
+
+            if (digit < 0) {
+                continue;
+            }
+
+            float digitX =
+                    startX +
+                            i * digitSpacing;
+
+            drawDigit(
+                    matrices,
+                    vertices,
+                    digit,
+                    digitX,
+                    0.0F
+            );
+        }
 
         matrices.popPose();
+    }
+
+    /*
+     * =========================================================
+     * DIGITAL DIGIT
+     * =========================================================
+     *
+     * Seven-segment style:
+     *
+     *       A
+     *     -----
+     *    |     |
+     *  F |     | B
+     *    |  G  |
+     *     -----
+     *    |     |
+     *  E |     | C
+     *    |     |
+     *     -----
+     *       D
+     */
+
+    private static void drawDigit(
+            PoseStack matrices,
+            VertexConsumer vertices,
+            int digit,
+            float x,
+            float y
+    ) {
+
+        boolean a = false;
+        boolean b = false;
+        boolean c = false;
+        boolean d = false;
+        boolean e = false;
+        boolean f = false;
+        boolean g = false;
+
+        switch (digit) {
+
+            case 0 -> {
+                a = true;
+                b = true;
+                c = true;
+                d = true;
+                e = true;
+                f = true;
+            }
+
+            case 1 -> {
+                b = true;
+                c = true;
+            }
+
+            case 2 -> {
+                a = true;
+                b = true;
+                d = true;
+                e = true;
+                g = true;
+            }
+
+            case 3 -> {
+                a = true;
+                b = true;
+                c = true;
+                d = true;
+                g = true;
+            }
+
+            case 4 -> {
+                b = true;
+                c = true;
+                f = true;
+                g = true;
+            }
+
+            case 5 -> {
+                a = true;
+                c = true;
+                d = true;
+                f = true;
+                g = true;
+            }
+
+            case 6 -> {
+                a = true;
+                c = true;
+                d = true;
+                e = true;
+                f = true;
+                g = true;
+            }
+
+            case 7 -> {
+                a = true;
+                b = true;
+                c = true;
+            }
+
+            case 8 -> {
+                a = true;
+                b = true;
+                c = true;
+                d = true;
+                e = true;
+                f = true;
+                g = true;
+            }
+
+            case 9 -> {
+                a = true;
+                b = true;
+                c = true;
+                d = true;
+                f = true;
+                g = true;
+            }
+        }
+
+        /*
+         * PURE WHITE
+         *
+         * Every rectangle uses:
+         *
+         * R = 1
+         * G = 1
+         * B = 1
+         * A = 1
+         */
+
+        if (a) {
+            horizontalSegment(
+                    matrices,
+                    vertices,
+                    x,
+                    y + 1.8F
+            );
+        }
+
+        if (g) {
+            horizontalSegment(
+                    matrices,
+                    vertices,
+                    x,
+                    y + 0.9F
+            );
+        }
+
+        if (d) {
+            horizontalSegment(
+                    matrices,
+                    vertices,
+                    x,
+                    y
+            );
+        }
+
+        if (f) {
+            verticalSegment(
+                    matrices,
+                    vertices,
+                    x - 0.5F,
+                    y + 1.35F
+            );
+        }
+
+        if (b) {
+            verticalSegment(
+                    matrices,
+                    vertices,
+                    x + 0.5F,
+                    y + 1.35F
+            );
+        }
+
+        if (e) {
+            verticalSegment(
+                    matrices,
+                    vertices,
+                    x - 0.5F,
+                    y + 0.45F
+            );
+        }
+
+        if (c) {
+            verticalSegment(
+                    matrices,
+                    vertices,
+                    x + 0.5F,
+                    y + 0.45F
+            );
+        }
+    }
+
+    /*
+     * =========================================================
+     * HORIZONTAL WHITE BAR
+     * =========================================================
+     */
+
+    private static void horizontalSegment(
+            PoseStack matrices,
+            VertexConsumer vertices,
+            float x,
+            float y
+    ) {
+
+        double halfWidth =
+                0.48;
+
+        double halfHeight =
+                0.10;
+
+        double depth =
+                0.035;
+
+        ShapeRenderer.addChainedFilledBoxVertices(
+                matrices,
+                vertices,
+
+                x - halfWidth,
+                y - halfHeight,
+                -depth,
+
+                x + halfWidth,
+                y + halfHeight,
+                depth,
+
+                1.0F,
+                1.0F,
+                1.0F,
+                1.0F
+        );
+    }
+
+    /*
+     * =========================================================
+     * VERTICAL WHITE BAR
+     * =========================================================
+     */
+
+    private static void verticalSegment(
+            PoseStack matrices,
+            VertexConsumer vertices,
+            float x,
+            float y
+    ) {
+
+        double halfWidth =
+                0.10;
+
+        double halfHeight =
+                0.40;
+
+        double depth =
+                0.035;
+
+        ShapeRenderer.addChainedFilledBoxVertices(
+                matrices,
+                vertices,
+
+                x - halfWidth,
+                y - halfHeight,
+                -depth,
+
+                x + halfWidth,
+                y + halfHeight,
+                depth,
+
+                1.0F,
+                1.0F,
+                1.0F,
+                1.0F
+        );
     }
 }
