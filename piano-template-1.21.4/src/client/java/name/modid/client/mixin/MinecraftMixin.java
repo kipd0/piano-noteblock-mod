@@ -4,6 +4,7 @@ import name.modid.NoteBlockData;
 import name.modid.PianoClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,6 +29,10 @@ public class MinecraftMixin {
                 Minecraft.getInstance();
 
         if (!PianoClient.PLAYER.isPlaying()) {
+            return;
+        }
+
+        if (client.player == null) {
             return;
         }
 
@@ -63,6 +68,25 @@ public class MinecraftMixin {
                 break;
             }
         }
+
+        /*
+         * DEBUG
+         *
+         * Shows what the mod detected.
+         */
+        client.player.displayClientMessage(
+                Component.literal(
+                        "Piano: clicked=" +
+                                clickedNote +
+                                " expected=" +
+                                PianoClient.PLAYER.getCurrentNote() +
+                                " pos=" +
+                                clickedPos.getX() + "," +
+                                clickedPos.getY() + "," +
+                                clickedPos.getZ()
+                ),
+                false
+        );
 
         if (clickedNote == -1) {
             return;
