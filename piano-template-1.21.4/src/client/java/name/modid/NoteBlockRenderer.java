@@ -80,7 +80,7 @@ public class NoteBlockRenderer {
         /*
          * SAME BLOCK TWICE
          *
-         * Purple = click this block now,
+         * gold = click this block now,
          * then click it again.
          */
 
@@ -91,13 +91,13 @@ public class NoteBlockRenderer {
                     vertices,
                     currentNote,
 
-                    // PURPLE
-                    0.72F,
-                    0.25F,
-                    1.0F,
+                    // gold
+                    1.00F,
+                    0.70F,
+                    1.10F,
 
                     // TRANSPARENCY
-                    0.48F
+                    0.45F
             );
 
         } else {
@@ -105,7 +105,7 @@ public class NoteBlockRenderer {
             /*
              * CURRENT NOTE
              *
-             * Cyan = click now.
+             * mint green = click now.
              */
 
             renderFilledBlock(
@@ -113,19 +113,19 @@ public class NoteBlockRenderer {
                     vertices,
                     currentNote,
 
-                    // CYAN
-                    0.10F,
-                    0.90F,
-                    1.0F,
+                    // mint green
+                    0.25F,
+                    1.00F,
+                    0.35F,
 
                     // TRANSPARENCY
-                    0.48F
+                    0.45F
             );
 
             /*
              * NEXT NOTE
              *
-             * Pink = next block.
+             * sky blue = next block.
              */
 
             if (nextNote >= 1 &&
@@ -136,13 +136,13 @@ public class NoteBlockRenderer {
                         vertices,
                         nextNote,
 
-                        // PINK
-                        1.0F,
-                        0.18F,
-                        0.62F,
+                        // skyblue
+                        0.20F,
+                        0.55F,
+                        1.00F,
 
                         // TRANSPARENCY
-                        0.38F
+                        0.30F
                 );
             }
         }
