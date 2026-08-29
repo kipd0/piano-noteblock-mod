@@ -2,13 +2,12 @@ package name.modid;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.core.BlockPos;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 public class NoteBlockRenderer {
 
@@ -28,10 +27,12 @@ public class NoteBlockRenderer {
         }
 
         int currentNote =
-                PianoClient.PLAYER.getCurrentNote();
+                PianoClient.PLAYER
+                        .getCurrentNote();
 
         int nextNote =
-                PianoClient.PLAYER.getNextNote();
+                PianoClient.PLAYER
+                        .getNextNote();
 
         int repeatCount =
                 PianoClient.PLAYER
@@ -70,7 +71,7 @@ public class NoteBlockRenderer {
 
         /*
          * =====================================================
-         * BLOCK OVERLAYS
+         * BLOCK COLORS
          * =====================================================
          */
 
@@ -92,7 +93,6 @@ public class NoteBlockRenderer {
          *
          * Green.
          */
-
         renderFilledBlock(
                 matrices,
                 blockVertices,
@@ -110,10 +110,9 @@ public class NoteBlockRenderer {
          *
          * Blue.
          *
-         * If next is the SAME block,
-         * don't draw the blue overlay.
+         * If next note is the same block,
+         * don't draw blue over it.
          */
-
         if (nextNote >= 1 &&
                 nextNote <= 24 &&
                 nextNote != currentNote) {
@@ -138,18 +137,16 @@ public class NoteBlockRenderer {
          * REPEAT NUMBER
          * =====================================================
          *
-         * This does NOT use Minecraft's font renderer.
-         *
-         * It draws the number from small white rectangles,
-         * so it uses the same world-rendering method that
-         * already works for your colored blocks.
+         * Only show 2 or higher.
          */
+        if (repeatCount > 1) {
 
-        renderNumber(
-                context,
-                currentNote,
-               8
-        );
+            renderNumber(
+                    context,
+                    currentNote,
+                    repeatCount
+            );
+        }
     }
 
     /*
@@ -209,6 +206,9 @@ public class NoteBlockRenderer {
      * =========================================================
      * NUMBER RENDERING
      * =========================================================
+     *
+     * The number is drawn directly on the
+     * side of the block facing the player.
      */
 
     private static void renderNumber(
@@ -242,19 +242,97 @@ public class NoteBlockRenderer {
         var camera =
                 context.camera();
 
-        /*
-         * We draw the number floating just
-         * above the block.
-         */
-
-        double x =
+        double blockX =
                 data.x + 0.5;
 
-        double y =
-                data.y + 1.15;
+        double blockY =
+                data.y + 0.5;
 
-        double z =
+        double blockZ =
                 data.z + 0.5;
+
+        double dx =
+                camera.getPosition().x -
+                        blockX;
+
+        double dz =
+                camera.getPosition().z -
+                        blockZ;
+
+        double x;
+        double y =
+                blockY;
+        double z;
+
+        float rotationY;
+
+        /*
+         * Pick whichever SIDE face is
+         * closest to the player.
+         */
+        if (Math.abs(dx) >
+                Math.abs(dz)) {
+
+            if (dx > 0) {
+
+                /*
+                 * EAST FACE
+                 */
+                x =
+                        data.x + 1.006;
+
+                z =
+                        data.z + 0.5;
+
+                rotationY =
+                        90.0F;
+
+            } else {
+
+                /*
+                 * WEST FACE
+                 */
+                x =
+                        data.x - 0.006;
+
+                z =
+                        data.z + 0.5;
+
+                rotationY =
+                        -90.0F;
+            }
+
+        } else {
+
+            if (dz > 0) {
+
+                /*
+                 * SOUTH FACE
+                 */
+                x =
+                        data.x + 0.5;
+
+                z =
+                        data.z + 1.006;
+
+                rotationY =
+                        180.0F;
+
+            } else {
+
+                /*
+                 * NORTH FACE
+                 */
+                x =
+                        data.x + 0.5;
+
+                z =
+                        data.z - 0.006;
+
+                rotationY =
+                        0.0F;
+            }
+        }
 
         matrices.pushPose();
 
@@ -265,23 +343,19 @@ public class NoteBlockRenderer {
         );
 
         /*
-         * Make the digital number always
-         * face the camera.
+         * Rotate flat against the block face.
          */
-
-        Quaternionf rotation =
-                new Quaternionf(
-                        camera.rotation()
-                );
-
-        matrices.mulPose(rotation);
+        matrices.mulPose(
+                Axis.YP.rotationDegrees(
+                        rotationY
+                )
+        );
 
         /*
-         * Width/height of one digit.
+         * Size of the number.
          */
-
         float scale =
-                0.18F;
+                0.22F;
 
         matrices.scale(
                 scale,
@@ -290,10 +364,8 @@ public class NoteBlockRenderer {
         );
 
         /*
-         * Flip it so it reads correctly
-         * toward the player.
+         * Flip so number reads correctly.
          */
-
         matrices.scale(
                 -1.0F,
                 -1.0F,
@@ -319,6 +391,12 @@ public class NoteBlockRenderer {
                 -(totalWidth / 2.0F) +
                         (digitSpacing / 2.0F);
 
+        /*
+         * Center vertically on the block face.
+         */
+        float startY =
+                -0.9F;
+
         for (int i = 0;
              i < text.length();
              i++) {
@@ -342,7 +420,7 @@ public class NoteBlockRenderer {
                     vertices,
                     digit,
                     digitX,
-                    0.0F
+                    startY
             );
         }
 
@@ -351,7 +429,7 @@ public class NoteBlockRenderer {
 
     /*
      * =========================================================
-     * DIGITAL DIGIT
+     * DIGITAL NUMBER
      * =========================================================
      *
      * Seven-segment style:
@@ -467,17 +545,6 @@ public class NoteBlockRenderer {
             }
         }
 
-        /*
-         * PURE WHITE
-         *
-         * Every rectangle uses:
-         *
-         * R = 1
-         * G = 1
-         * B = 1
-         * A = 1
-         */
-
         if (a) {
             horizontalSegment(
                     matrices,
@@ -544,7 +611,7 @@ public class NoteBlockRenderer {
 
     /*
      * =========================================================
-     * HORIZONTAL WHITE BAR
+     * WHITE HORIZONTAL BAR
      * =========================================================
      */
 
@@ -562,7 +629,7 @@ public class NoteBlockRenderer {
                 0.10;
 
         double depth =
-                0.035;
+                0.025;
 
         ShapeRenderer.addChainedFilledBoxVertices(
                 matrices,
@@ -576,6 +643,10 @@ public class NoteBlockRenderer {
                 y + halfHeight,
                 depth,
 
+                /*
+                 * PURE WHITE
+                 * FULL OPACITY
+                 */
                 1.0F,
                 1.0F,
                 1.0F,
@@ -585,7 +656,7 @@ public class NoteBlockRenderer {
 
     /*
      * =========================================================
-     * VERTICAL WHITE BAR
+     * WHITE VERTICAL BAR
      * =========================================================
      */
 
@@ -603,7 +674,7 @@ public class NoteBlockRenderer {
                 0.40;
 
         double depth =
-                0.035;
+                0.025;
 
         ShapeRenderer.addChainedFilledBoxVertices(
                 matrices,
@@ -617,6 +688,10 @@ public class NoteBlockRenderer {
                 y + halfHeight,
                 depth,
 
+                /*
+                 * PURE WHITE
+                 * FULL OPACITY
+                 */
                 1.0F,
                 1.0F,
                 1.0F,
