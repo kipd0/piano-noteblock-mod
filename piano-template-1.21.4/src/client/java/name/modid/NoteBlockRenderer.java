@@ -38,7 +38,7 @@ public class NoteBlockRenderer {
                 PianoClient.PLAYER
                         .getRemainingRepeatCount();
 
-        if (currentNote < 1 ||
+        if (currentNote < 0 ||
                 currentNote > 24) {
             return;
         }
@@ -104,7 +104,7 @@ public class NoteBlockRenderer {
          * Don't show blue when the next
          * note is the same block.
          */
-        if (nextNote >= 1 &&
+        if (nextNote >= 0 &&
                 nextNote <= 24 &&
                 nextNote != currentNote) {
 
