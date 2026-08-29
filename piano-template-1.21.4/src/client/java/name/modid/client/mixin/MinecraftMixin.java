@@ -1,7 +1,6 @@
 package name.modid.client.mixin;
 
 import name.modid.NoteBlockData;
-import name.modid.NoteBlockLayout;
 import name.modid.PianoClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -11,8 +10,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.Map;
 
 @Mixin(Minecraft.class)
 public class MinecraftMixin {
@@ -29,16 +26,16 @@ public class MinecraftMixin {
                 Minecraft.getInstance();
 
         /*
-         * Only care about clicks while
-         * a song is actively playing.
+         * Only do anything while
+         * a song is playing.
          */
         if (!PianoClient.PLAYER.isPlaying()) {
             return;
         }
 
         /*
-         * Make sure we are actually
-         * looking at a block.
+         * Make sure the player is
+         * actually looking at a block.
          */
         HitResult hit =
                 client.hitResult;
@@ -52,79 +49,76 @@ public class MinecraftMixin {
 
         /*
          * =====================================================
-         * CURRENT LAYOUT
+         * GET THE NOTE THE SONG EXPECTS
+         * =====================================================
+         */
+
+        int expectedNote =
+                PianoClient.PLAYER
+                        .getCurrentNote();
+
+        /*
+         * -1 means there is no current note.
+         *
+         * Note 0 is valid.
+         */
+        if (expectedNote < 0 ||
+                expectedNote > 24) {
+            return;
+        }
+
+        /*
+         * =====================================================
+         * GET THAT NOTE'S ASSIGNED BLOCK
          * =====================================================
          *
-         * IMPORTANT:
-         *
-         * We must read from the CURRENT selected layout.
-         *
-         * The old code used:
-         *
-         * PianoClient.CONFIG.noteBlocks
-         *
-         * which is only the old migration storage.
+         * This automatically uses the
+         * currently selected layout.
          */
 
-        NoteBlockLayout layout =
+        NoteBlockData expectedBlock =
                 PianoClient.CONFIG
-                        .getCurrentLayout();
+                        .getNoteBlock(
+                                expectedNote
+                        );
 
-        if (layout == null ||
-                layout.noteBlocks == null) {
-            return;
-        }
-
-        int clickedNote =
-                -1;
-
-        /*
-         * Find which assigned note number
-         * matches the block we clicked.
-         *
-         * Supports note numbers:
-         *
-         * 0 through 24.
-         */
-        for (Map.Entry<Integer, NoteBlockData> entry :
-                layout.noteBlocks.entrySet()) {
-
-            NoteBlockData data =
-                    entry.getValue();
-
-            if (data == null) {
-                continue;
-            }
-
-            if (data.x == clickedPos.getX() &&
-                    data.y == clickedPos.getY() &&
-                    data.z == clickedPos.getZ()) {
-
-                clickedNote =
-                        entry.getKey();
-
-                break;
-            }
-        }
-
-        /*
-         * -1 means this block isn't assigned
-         * in the current layout.
-         *
-         * Note 0 is VALID, so do NOT use:
-         *
-         * clickedNote <= 0
-         */
-        if (clickedNote == -1) {
+        if (expectedBlock == null) {
             return;
         }
 
         /*
-         * Tell the song player which
-         * note block was clicked.
+         * =====================================================
+         * CHECK THE CLICKED POSITION
+         * =====================================================
+         *
+         * We DON'T search every assignment anymore.
+         *
+         * We only check:
+         *
+         * "Did the player click the block belonging
+         *  to the CURRENT expected note?"
+         *
+         * This avoids duplicate-coordinate problems.
          */
+
+        if (clickedPos.getX() != expectedBlock.x ||
+                clickedPos.getY() != expectedBlock.y ||
+                clickedPos.getZ() != expectedBlock.z) {
+
+            /*
+             * Wrong block.
+             */
+            return;
+        }
+
+        /*
+         * =====================================================
+         * CORRECT BLOCK
+         * =====================================================
+         */
+
         PianoClient.PLAYER.clickNote(
-                clickedNote
+                expectedNote
         );
     }
 }
