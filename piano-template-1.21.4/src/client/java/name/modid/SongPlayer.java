@@ -22,9 +22,7 @@ public class SongPlayer {
         }
 
         this.song = song;
-
         this.currentIndex = 0;
-
         this.playing = true;
 
         this.highlightedNote =
@@ -34,11 +32,9 @@ public class SongPlayer {
     public void stop() {
 
         playing = false;
-
         highlightedNote = -1;
 
         song = null;
-
         currentIndex = 0;
     }
 
@@ -57,13 +53,61 @@ public class SongPlayer {
         return currentIndex;
     }
 
-    /*
-     * Called when the player left-clicks
-     * an assigned note block.
-     *
-     * The song only advances if the clicked
-     * note is the currently highlighted note.
-     */
+    public int getCurrentNote() {
+
+        if (!playing ||
+                song == null ||
+                currentIndex < 0 ||
+                currentIndex >= song.notes.size()) {
+
+            return -1;
+        }
+
+        return song.notes
+                .get(currentIndex)
+                .noteBlock;
+    }
+
+    public int getNextNote() {
+
+        if (!playing ||
+                song == null) {
+
+            return -1;
+        }
+
+        int index =
+                currentIndex + 1;
+
+        if (index >= song.notes.size()) {
+            return -1;
+        }
+
+        return song.notes
+                .get(index)
+                .noteBlock;
+    }
+
+    public int getNextNextNote() {
+
+        if (!playing ||
+                song == null) {
+
+            return -1;
+        }
+
+        int index =
+                currentIndex + 2;
+
+        if (index >= song.notes.size()) {
+            return -1;
+        }
+
+        return song.notes
+                .get(index)
+                .noteBlock;
+    }
+
     public void clickNote(int noteNumber) {
 
         if (!playing ||
@@ -74,24 +118,13 @@ public class SongPlayer {
             return;
         }
 
-        /*
-         * Wrong note clicked.
-         * Do nothing.
-         */
         if (noteNumber != highlightedNote) {
 
             return;
         }
 
-        /*
-         * Correct note was clicked.
-         * Move to the next song entry.
-         */
         currentIndex++;
 
-        /*
-         * End of song.
-         */
         if (currentIndex >= song.notes.size()) {
 
             stop();
@@ -105,14 +138,6 @@ public class SongPlayer {
                         .noteBlock;
     }
 
-    /*
-     * Repeated notes alternate:
-     *
-     * 6 = yellow
-     * 6 = red
-     * 6 = yellow
-     * 6 = red
-     */
     public boolean useAlternateColor() {
 
         if (!playing ||
@@ -147,16 +172,8 @@ public class SongPlayer {
         return repeatPosition % 2 == 1;
     }
 
-    /*
-     * Kept for compatibility because
-     * PianoClient currently calls PLAYER.tick(client).
-     *
-     * Timing no longer happens here.
-     */
     public void tick(Minecraft client) {
 
-        // No automatic timing anymore.
-        // The song advances only when
-        // the correct note block is clicked.
+        // No automatic timing.
     }
 }
