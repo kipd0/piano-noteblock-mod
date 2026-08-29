@@ -9,7 +9,7 @@ import net.minecraft.world.phys.HitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Map;
 
@@ -21,7 +21,7 @@ public class MinecraftMixin {
             at = @At("HEAD")
     )
     private void piano$onLeftClick(
-            CallbackInfo ci
+            CallbackInfoReturnable<Boolean> cir
     ) {
 
         Minecraft client =
