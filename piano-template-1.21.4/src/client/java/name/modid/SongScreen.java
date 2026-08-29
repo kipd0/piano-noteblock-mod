@@ -18,7 +18,6 @@ public class SongScreen extends Screen {
     private EditBox noteBox;
 
     private String message = "";
-
     private String selectedSongName = null;
 
     private int songPage = 0;
@@ -240,7 +239,7 @@ public class SongScreen extends Screen {
 
         /*
          * =========================
-         * CLEAR SONG
+         * CLEAR / DONE
          * =========================
          */
 
@@ -390,10 +389,6 @@ public class SongScreen extends Screen {
      * =========================================================
      * IMPORT SONG
      * =========================================================
-     *
-     * New format:
-     *
-     * 4,6,7,9,6,6,4
      */
 
     private void importSong() {
@@ -1285,7 +1280,7 @@ public class SongScreen extends Screen {
                         PianoClient.CONFIG
                                 .currentSong,
                 centerX,
-                395,
+                365,
                 0xFFFF55
         );
 
@@ -1295,7 +1290,7 @@ public class SongScreen extends Screen {
                     font,
                     message,
                     centerX,
-                    410,
+                    380,
                     0xFFFFFF
             );
         }
@@ -1304,7 +1299,7 @@ public class SongScreen extends Screen {
                 PianoClient.CONFIG
                         .getCurrentSong();
 
-        int y = 430;
+        int y = 400;
 
         for (int i = 0;
              i < song.notes.size();
