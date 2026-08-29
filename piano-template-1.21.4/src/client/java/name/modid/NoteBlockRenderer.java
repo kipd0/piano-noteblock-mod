@@ -50,7 +50,7 @@ public class NoteBlockRenderer {
             return;
         }
 
-        MultiBufferSource consumers =
+        var consumers =
                 context.consumers();
 
         if (consumers == null) {
@@ -60,27 +60,18 @@ public class NoteBlockRenderer {
         var camera =
                 context.camera();
 
-        double camX =
-                camera.getPosition().x;
-
-        double camY =
-                camera.getPosition().y;
-
-        double camZ =
-                camera.getPosition().z;
-
         /*
          * =====================================================
-         * BLOCK COLORS
+         * FILLED BLOCK COLORS
          * =====================================================
          */
 
         matrices.pushPose();
 
         matrices.translate(
-                -camX,
-                -camY,
-                -camZ
+                -camera.getPosition().x,
+                -camera.getPosition().y,
+                -camera.getPosition().z
         );
 
         VertexConsumer vertices =
@@ -89,7 +80,7 @@ public class NoteBlockRenderer {
                 );
 
         /*
-         * CURRENT BLOCK
+         * CURRENT
          *
          * Green.
          */
@@ -107,12 +98,12 @@ public class NoteBlockRenderer {
         );
 
         /*
-         * NEXT BLOCK
+         * NEXT
          *
          * Blue.
          *
-         * Don't draw blue when the
-         * next note is the same block.
+         * If next is the same note,
+         * don't put blue over it.
          */
 
         if (nextNote >= 1 &&
@@ -207,21 +198,6 @@ public class NoteBlockRenderer {
      * =========================================================
      * REPEAT NUMBER
      * =========================================================
-     *
-     * Example:
-     *
-     * 6,6,6,6,4
-     *
-     * First click:
-     *      4
-     *
-     * Then:
-     *      3
-     *
-     * Then:
-     *      2
-     *
-     * Final #6 has no number.
      */
 
     private static void renderRepeatNumber(
@@ -247,11 +223,7 @@ public class NoteBlockRenderer {
         PoseStack matrices =
                 context.matrixStack();
 
-        MultiBufferSource consumers =
-                context.consumers();
-
-        if (matrices == null ||
-                consumers == null) {
+        if (matrices == null) {
             return;
         }
 
@@ -259,26 +231,40 @@ public class NoteBlockRenderer {
                 context.camera();
 
         /*
-         * Put the number ABOVE the block.
+         * IMPORTANT:
          *
-         * Previously it was inside the block,
-         * so Minecraft's depth rendering
-         * could hide it completely.
+         * Use Minecraft's main text buffer instead
+         * of the WorldRenderContext buffer.
+         */
+
+        MultiBufferSource.BufferSource textBuffer =
+                client.renderBuffers()
+                        .bufferSource();
+
+        String text =
+                String.valueOf(repeatCount);
+
+        /*
+         * Position:
+         *
+         * Centered horizontally over the block,
+         * slightly above the top face.
          */
 
         double x =
                 data.x + 0.5;
 
         double y =
-                data.y + 1.20;
+                data.y + 1.35;
 
         double z =
                 data.z + 0.5;
 
-        String text =
-                String.valueOf(repeatCount);
-
         matrices.pushPose();
+
+        /*
+         * Move from camera to block.
+         */
 
         matrices.translate(
                 x - camera.getPosition().x,
@@ -287,7 +273,9 @@ public class NoteBlockRenderer {
         );
 
         /*
-         * Always face the player.
+         * Billboard.
+         *
+         * Always faces the player's screen.
          */
 
         matrices.mulPose(
@@ -295,12 +283,14 @@ public class NoteBlockRenderer {
         );
 
         /*
-         * Make it large enough
-         * to clearly read.
+         * BIGGER than before.
+         *
+         * This should be very obvious while
+         * we're testing it.
          */
 
         float scale =
-                0.045F;
+                0.060F;
 
         matrices.scale(
                 -scale,
@@ -309,46 +299,51 @@ public class NoteBlockRenderer {
         );
 
         float textX =
-                -font.width(text) / 2.0F;
+                -font.width(text) /
+                        2.0F;
 
         float textY =
-                -font.lineHeight / 2.0F;
+                -font.lineHeight /
+                        2.0F;
 
         /*
-         * PURE WHITE
+         * Pure white.
          *
-         * Full opacity.
+         * FF alpha
+         * FF red
+         * FF green
+         * FF blue
          */
 
         int pureWhite =
                 0xFFFFFFFF;
+
+        /*
+         * Draw a SEE_THROUGH copy.
+         *
+         * This means terrain cannot hide it.
+         */
 
         font.drawInBatch(
                 text,
                 textX,
                 textY,
                 pureWhite,
-
                 false,
-
-                matrices
-                        .last()
-                        .pose(),
-
-                consumers,
-
-                /*
-                 * Important:
-                 *
-                 * SEE_THROUGH prevents the
-                 * block from hiding the number.
-                 */
+                matrices.last().pose(),
+                textBuffer,
                 Font.DisplayMode.SEE_THROUGH,
-
                 0,
-
                 15728880
         );
+
+        /*
+         * Explicitly flush the text buffer.
+         *
+         * This is the important change.
+         */
+
+        textBuffer.endBatch();
 
         matrices.popPose();
     }
