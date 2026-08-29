@@ -33,17 +33,30 @@ public class PianoHudRenderer {
                             PianoClient.PLAYER
                                     .getNextNextNote();
 
-                    int centerX =
+                    int screenWidth =
                             client.getWindow()
-                                    .getGuiScaledWidth()
-                                    / 2;
+                                    .getGuiScaledWidth();
 
-                    int y = 40;
+                    int screenHeight =
+                            client.getWindow()
+                                    .getGuiScaledHeight();
+
+                    int x =
+                            (int) (
+                                    screenWidth *
+                                    PianoClient.CONFIG.hudX
+                            );
+
+                    int y =
+                            (int) (
+                                    screenHeight *
+                                    PianoClient.CONFIG.hudY
+                            );
 
                     graphics.drawCenteredString(
                             client.font,
                             "NOW: #" + current,
-                            centerX,
+                            x,
                             y,
                             0xFFFF55
                     );
@@ -53,7 +66,7 @@ public class PianoHudRenderer {
                         graphics.drawCenteredString(
                                 client.font,
                                 "NEXT: #" + next,
-                                centerX,
+                                x,
                                 y + 14,
                                 0xFFFFFF
                         );
@@ -64,7 +77,7 @@ public class PianoHudRenderer {
                         graphics.drawCenteredString(
                                 client.font,
                                 "THEN: #" + nextNext,
-                                centerX,
+                                x,
                                 y + 28,
                                 0xAAAAAA
                         );
