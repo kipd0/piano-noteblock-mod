@@ -363,15 +363,6 @@ public class NoteBlockRenderer {
                 scale
         );
 
-        /*
-         * Flip so number reads correctly.
-         */
-        matrices.scale(
-                -1.0F,
-                -1.0F,
-                1.0F
-        );
-
         VertexConsumer vertices =
                 consumers.getBuffer(
                         RenderType.debugFilledBox()
