@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.AABB;
 
 public class NoteBlockRenderer {
 
@@ -75,77 +74,75 @@ public class NoteBlockRenderer {
 
         VertexConsumer vertices =
                 consumers.getBuffer(
-                        RenderType.lines()
+                        RenderType.debugFilledBox()
                 );
 
         /*
-         * =====================================================
-         * SAME NOTE TWICE
-         * =====================================================
+         * SAME BLOCK TWICE
          *
-         * Purple = current note is also the next note.
-         *
-         * Example:
-         *
-         * 6,6,4
-         *
-         * #6 will be purple.
+         * Purple = click this block now,
+         * then click it again.
          */
 
         if (currentNote == nextNote) {
 
-            renderGlowBox(
+            renderFilledBlock(
                     matrices,
                     vertices,
                     currentNote,
 
                     // PURPLE
-                    0.75F,
+                    0.72F,
                     0.25F,
-                    1.0F
+                    1.0F,
+
+                    // TRANSPARENCY
+                    0.48F
             );
 
         } else {
 
             /*
-             * =================================================
              * CURRENT NOTE
-             * =================================================
              *
-             * Bright cyan.
+             * Cyan = click now.
              */
 
-            renderGlowBox(
+            renderFilledBlock(
                     matrices,
                     vertices,
                     currentNote,
 
                     // CYAN
-                    0.15F,
+                    0.10F,
                     0.90F,
-                    1.0F
+                    1.0F,
+
+                    // TRANSPARENCY
+                    0.48F
             );
 
             /*
-             * =================================================
              * NEXT NOTE
-             * =================================================
              *
-             * Hot pink.
+             * Pink = next block.
              */
 
             if (nextNote >= 1 &&
                     nextNote <= 24) {
 
-                renderGlowBox(
+                renderFilledBlock(
                         matrices,
                         vertices,
                         nextNote,
 
                         // PINK
                         1.0F,
-                        0.20F,
-                        0.65F
+                        0.18F,
+                        0.62F,
+
+                        // TRANSPARENCY
+                        0.38F
                 );
             }
         }
@@ -153,19 +150,14 @@ public class NoteBlockRenderer {
         matrices.popPose();
     }
 
-    /*
-     * =========================================================
-     * OSU-STYLE GLOW BOX
-     * =========================================================
-     */
-
-    private static void renderGlowBox(
+    private static void renderFilledBlock(
             PoseStack matrices,
             VertexConsumer vertices,
             int noteNumber,
             float red,
             float green,
-            float blue
+            float blue,
+            float alpha
     ) {
 
         NoteBlockData data =
@@ -183,73 +175,47 @@ public class NoteBlockRenderer {
                         data.z
                 );
 
-        AABB box =
-                new AABB(
-                        pos.getX(),
-                        pos.getY(),
-                        pos.getZ(),
-                        pos.getX() + 1,
-                        pos.getY() + 1,
-                        pos.getZ() + 1
-                );
-
         /*
-         * Outer glow
+         * Slight expansion prevents
+         * z-fighting with the real block.
          */
 
-        ShapeRenderer.renderLineBox(
+        double expansion = 0.002;
+
+        double minX =
+                pos.getX() - expansion;
+
+        double minY =
+                pos.getY() - expansion;
+
+        double minZ =
+                pos.getZ() - expansion;
+
+        double maxX =
+                pos.getX() + 1 + expansion;
+
+        double maxY =
+                pos.getY() + 1 + expansion;
+
+        double maxZ =
+                pos.getZ() + 1 + expansion;
+
+        ShapeRenderer.addChainedFilledBoxVertices(
                 matrices,
                 vertices,
-                box.inflate(0.10),
+
+                minX,
+                minY,
+                minZ,
+
+                maxX,
+                maxY,
+                maxZ,
+
                 red,
                 green,
                 blue,
-                0.25F
-        );
-
-        /*
-         * Middle glow
-         */
-
-        ShapeRenderer.renderLineBox(
-                matrices,
-                vertices,
-                box.inflate(0.075),
-                red,
-                green,
-                blue,
-                0.50F
-        );
-
-        /*
-         * Strong colored outline
-         */
-
-        ShapeRenderer.renderLineBox(
-                matrices,
-                vertices,
-                box.inflate(0.05),
-                red,
-                green,
-                blue,
-                1.0F
-        );
-
-        /*
-         * Small bright inner outline.
-         *
-         * This gives the target a brighter,
-         * rhythm-game-like edge.
-         */
-
-        ShapeRenderer.renderLineBox(
-                matrices,
-                vertices,
-                box.inflate(0.03),
-                1.0F,
-                1.0F,
-                1.0F,
-                0.85F
+                alpha
         );
     }
 }
