@@ -145,14 +145,11 @@ public class NoteBlockRenderer {
          * already works for your colored blocks.
          */
 
-        if (repeatCount > 1) {
-
-            renderNumber(
-                    context,
-                    currentNote,
-                    repeatCount
-            );
-        }
+        renderNumber(
+                context,
+                currentNote,
+               8
+        );
     }
 
     /*
